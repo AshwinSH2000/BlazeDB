@@ -49,12 +49,12 @@ public class BlazeDB {
 	    Tuple tuple;
 	    while ((tuple = scan.getNextTuple()) != null) {
 	        //System.out.println("milos's " + tuple);
-	    	i++;
-	    	if(i==4)
-	    	{
-	    		System.out.println("\n resetting. now the table must start from the beginning.");
-	    		scan.reset();
-	    	}
+//	    	i++;
+//	    	if(i==4)
+//	    	{
+//	    		System.out.println("\n resetting. now the table must start from the beginning.");
+//	    		scan.reset();
+//	    	}
 	    	;
 	    }
 	    scan.reset();
