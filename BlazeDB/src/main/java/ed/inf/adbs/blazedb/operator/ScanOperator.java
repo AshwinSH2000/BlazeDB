@@ -37,8 +37,10 @@ public class ScanOperator extends Operator {
                 // Convert the CSV line into a list of integers (since all values are integers)
                 String[] values = currentLine.split(",");
                 Tuple tuple = new Tuple();
+                System.out.println();
                 for (String value : values) {
-                	System.out.println("Ths is in getNextTuple function: " + value );
+//                	System.out.println("Ths is in getNextTuple function: " + value );
+                	System.out.print(value + " ");
                     tuple.add(Integer.parseInt(value.trim()));
                 }
                 return tuple;

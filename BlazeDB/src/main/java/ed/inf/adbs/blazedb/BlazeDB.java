@@ -37,17 +37,28 @@ public class BlazeDB {
 		parsingExample(inputFile);
 		
 		List<String> schema = Arrays.asList("A","B", "C", "D");
-		
+//		for( String s : schema) {
+//			System.out.println(s);
+//		}
+//		
 		String tableName = "Student";
 		
 	    ScanOperator scan = new ScanOperator(tableName, databaseDir, schema);
 	    
+	    int i=0;
 	    Tuple tuple;
 	    while ((tuple = scan.getNextTuple()) != null) {
 	        //System.out.println("milos's " + tuple);
+	    	i++;
+	    	if(i==4)
+	    	{
+	    		System.out.println("\n resetting. now the table must start from the beginning.");
+	    		scan.reset();
+	    	}
 	    	;
 	    }
-
+	    scan.reset();
+	    
 	    scan.close();
 
 	}
@@ -65,8 +76,11 @@ public class BlazeDB {
 				Select select = (Select) statement;
 				System.out.println("Statement: " + select);
 				System.out.println("SELECT items: " + select.getPlainSelect().getSelectItems());
+				System.out.println("DISTINCT clause: "+ select.getPlainSelect().getDistinct());
 				System.out.println("WHERE expression: " + select.getPlainSelect().getWhere());
-				
+				System.out.println("GROUP BY clause: " + select.getPlainSelect().getGroupBy());
+				System.out.println("ORDER BY clause: "+ select.getPlainSelect().getOrderByElements());
+				System.out.println("FROM : "+ select.getPlainSelect().getFromItem()); //but this is displaying only one table. need to examine
 				
 			}
 		} catch (Exception e) {

@@ -10,16 +10,11 @@ import java.util.List;
  */
 public class Tuple {
 	
-	List<Integer> x = new ArrayList<>();;
+	List<Integer> x = new ArrayList<>();
 	
-	public void add(int int1) {
-		// TODO Auto-generated method stub
-		System.out.println(int1 + " is inside the add function");
-		x.add(int1);
-	}
-	
-	
-	//need to implement add function that is called in scanoperator
-	
+	public void add(int value) {
+		//System.out.println(value + " is inside the add function");
+		x.add(value);
+	}	
 	
 }
