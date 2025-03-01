@@ -35,35 +35,41 @@ public class BlazeDB {
 
 		// Just for demonstration, replace this function call with your logic
 		parsingExample(inputFile);
-		
+
 		List<String> schema = Arrays.asList("A","B", "C", "D");
-//		for( String s : schema) {
-//			System.out.println(s);
-//		}
-//		
+		//		for( String s : schema) {
+		//			System.out.println(s);
+		//		}
+		//		
 		String tableName = "Student";
-		
-	    ScanOperator scan = new ScanOperator(tableName, databaseDir, schema);
-	    
-	    int i=0;
-	    Tuple tuple;
-	    while ((tuple = scan.getNextTuple()) != null) {
-	        //System.out.println("milos's " + tuple);
-//	    	i++;
-//	    	if(i==4)
-//	    	{
-//	    		System.out.println("\n resetting. now the table must start from the beginning.");
-//	    		scan.reset();
-//	    	}
-	    	;
-	    }
-	    scan.reset();
-	    
-	    scan.close();
-	    
-	    DatabaseCatalog dbc = DatabaseCatalog.getInstance();
-	    dbc.loadDetails(databaseDir);
-	    dbc.displayCatalogHash();
+
+		ScanOperator scan = new ScanOperator(tableName, databaseDir, schema);
+
+		int i=0;
+		Tuple tuple;
+		while ((tuple = scan.getNextTuple()) != null) {
+			//System.out.println("milos's " + tuple);
+			//	    	i++;
+			//	    	if(i==4)
+			//	    	{
+			//	    		System.out.println("\n resetting. now the table must start from the beginning.");
+			//	    		scan.reset();
+			//	    	}
+			;
+		}
+		scan.reset();
+
+		scan.close();
+
+		DatabaseCatalog dbc = DatabaseCatalog.getInstance();
+		dbc.loadDetails(databaseDir);
+		//dbc.displayCatalogHash();
+		String x=dbc.getTableFilePath(tableName);
+		TableInfo y=dbc.getTableInfo(tableName);
+		List<String> z=dbc.getTableSchema(tableName);
+		System.out.println(x);
+		System.out.println(y);
+		System.out.println(z);
 
 	}
 
@@ -75,7 +81,7 @@ public class BlazeDB {
 	public static void parsingExample(String filename) {
 		try {
 			Statement statement = CCJSqlParserUtil.parse(new FileReader(filename));
-//            Statement statement = CCJSqlParserUtil.parse("SELECT Course.cid, Student.name FROM Course, Student WHERE Student.sid = 3");
+			//            Statement statement = CCJSqlParserUtil.parse("SELECT Course.cid, Student.name FROM Course, Student WHERE Student.sid = 3");
 			if (statement != null) {
 				Select select = (Select) statement;
 				System.out.println("Statement: " + select);
@@ -85,7 +91,7 @@ public class BlazeDB {
 				System.out.println("GROUP BY clause: " + select.getPlainSelect().getGroupBy());
 				System.out.println("ORDER BY clause: "+ select.getPlainSelect().getOrderByElements());
 				System.out.println("FROM : "+ select.getPlainSelect().getFromItem()); //but this is displaying only one table. need to examine
-				
+
 			}
 		} catch (Exception e) {
 			System.err.println("Exception occurred during parsing");

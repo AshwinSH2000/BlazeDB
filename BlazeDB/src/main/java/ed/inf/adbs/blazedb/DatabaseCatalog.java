@@ -72,10 +72,38 @@ public class DatabaseCatalog {
 		
 	}
 	
-	//function to check the values of the hash map. only for debugging
+	//function to check the values of the hash map. this is only for debugging
 	public void displayCatalogHash() {
 		for(Map.Entry<String, TableInfo> map : catalogHash.entrySet()) {
-			System.out.println(map.getKey() + " has a value " + map.getValue().toString());
+			System.out.println(map.getKey() + " has a value " + map.getValue());
+			
 		}
 	}
+	
+	/*
+	 * @param name the name of the table whose information we want to access
+	 */
+	public TableInfo getTableInfo(String name) {
+		return catalogHash.get(name);
+	}
+	
+	/*
+	 * @param name the name of the table whose schema we want to access
+	 */
+	public List<String> getTableSchema(String name){
+		if (catalogHash.containsKey(name)) {
+			return catalogHash.get(name).attributes;
+		}
+		else
+			return null;
+	}
+	
+	public String getTableFilePath(String name) {
+		if(catalogHash.containsKey(name)) {
+			return catalogHash.get(name).path;
+		}
+		else
+			return null;
+	}
+	
 }
