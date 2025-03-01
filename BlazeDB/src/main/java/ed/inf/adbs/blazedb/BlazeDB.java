@@ -60,6 +60,10 @@ public class BlazeDB {
 	    scan.reset();
 	    
 	    scan.close();
+	    
+	    DatabaseCatalog dbc = DatabaseCatalog.getInstance();
+	    dbc.loadDetails(databaseDir);
+	    dbc.displayCatalogHash();
 
 	}
 

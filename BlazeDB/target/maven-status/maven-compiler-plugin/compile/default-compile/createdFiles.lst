@@ -1,4 +1,6 @@
+ed/inf/adbs/blazedb/DatabaseCatalog.class
 ed/inf/adbs/blazedb/Tuple.class
+ed/inf/adbs/blazedb/TableInfo.class
 ed/inf/adbs/blazedb/operator/ScanOperator.class
 ed/inf/adbs/blazedb/BlazeDB.class
 ed/inf/adbs/blazedb/operator/Operator.class
