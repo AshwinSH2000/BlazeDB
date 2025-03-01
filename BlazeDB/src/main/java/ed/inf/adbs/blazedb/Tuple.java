@@ -12,11 +12,31 @@ public class Tuple {
 	
 	List<Integer> x = new ArrayList<>();
 	
+	
+	
 	public void add(int value) {
 		x.add(value);
 		
 		//System.out.println(value + " is added to the tuple");
 
+	}
+
+	@Override
+	public String toString() {
+		String rowData="";
+		for(int i : x) {
+			if(rowData=="") {
+				rowData=rowData+i;
+			}
+			else
+			{
+				rowData=rowData+","+i;
+			}
+		}
+		
+		return rowData;
 	}	
+	
+	
 	
 }

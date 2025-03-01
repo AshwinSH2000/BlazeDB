@@ -18,6 +18,7 @@ import net.sf.jsqlparser.statement.select.OrderByElement;
 import net.sf.jsqlparser.statement.select.Select;
 import net.sf.jsqlparser.statement.select.SelectItem;
 import ed.inf.adbs.blazedb.operator.Operator;
+import ed.inf.adbs.blazedb.operator.QueryPlan;
 import ed.inf.adbs.blazedb.operator.ScanOperator;
 
 /**
@@ -41,35 +42,34 @@ public class BlazeDB {
 		String outputFile = args[2];
 
 		// Just for demonstration, replace this function call with your logic
-		parsingExample(inputFile);
 
-		List<String> schema = Arrays.asList("A","B", "C", "D");
+		//List<String> schema = Arrays.asList("A","B", "C", "D");
 		//		for( String s : schema) {
 		//			System.out.println(s);
 		//		}
 		//		
-		String tableName = "Student";
+		//String tableName = "Student";
 
-		ScanOperator scan = new ScanOperator(tableName, databaseDir, schema);
+		//ScanOperator scan = new ScanOperator(tableName, databaseDir, schema);
+		//ScanOperator scan = new ScanOperator(tableName);
 
-		int i=0;
-		Tuple tuple;
-		while ((tuple = scan.getNextTuple()) != null) {
-			//System.out.println("milos's " + tuple);
-			//	    	i++;
-			//	    	if(i==4)
-			//	    	{
-			//	    		System.out.println("\n resetting. now the table must start from the beginning.");
-			//	    		scan.reset();
-			//	    	}
-			;
-		}
-		scan.reset();
-
-		scan.close();
+//		int i=0;
+//		Tuple tuple;
+//		while ((tuple = scan.getNextTuple()) != null) {
+//
+//			;
+//		}
+//		scan.reset();
+//
+//		scan.close();
 
 		DatabaseCatalog dbc = DatabaseCatalog.getInstance();
 		dbc.loadDetails(databaseDir);
+		
+		
+		System.out.println("Hope this is after creating the new iinstance");
+		parsingExample(inputFile, outputFile);
+
 		//		String x=dbc.getTableFilePath(tableName);
 		//		TableInfo y=dbc.getTableInfo(tableName);
 		//		List<String> z=dbc.getTableSchema(tableName);
@@ -85,7 +85,7 @@ public class BlazeDB {
 	 * from a file or a string and prints the SELECT and WHERE clauses to screen.
 	 */
 
-	public static void parsingExample(String filename) {
+	public static void parsingExample(String filename, String outputFile) {
 		try {
 			Statement statement = CCJSqlParserUtil.parse(new FileReader(filename));
 			//            Statement statement = CCJSqlParserUtil.parse("SELECT Course.cid, Student.name FROM Course, Student WHERE Student.sid = 3");
@@ -93,7 +93,7 @@ public class BlazeDB {
 
 				//create the necessary variables to hold the parsed and broken down SQL commands
 				List<SelectItem<?>> SELECT;
-				Distinct DISTINCT;
+				Distinct DISTINCT;	
 				List<OrderByElement> ORDERBY;
 				GroupByElement GROUPBY;
 				Expression WHERE;
@@ -117,6 +117,20 @@ public class BlazeDB {
 				System.out.println("ORDER BY : "+ ORDERBY);
 				System.out.println("FROM : "+ FROM);				 //but this is displaying only one table. rest in getJoin
 				System.out.println("JOIN  : "+JOIN);
+				
+//				Code to test the initialization of databasecatalog				
+//				DatabaseCatalog dbc = DatabaseCatalog.getInstance();
+//				String x=dbc.getTableFilePath(FROM.toString());
+//				TableInfo y=dbc.getTableInfo(FROM.toString());
+//				List<String> z=dbc.getTableSchema(FROM.toString());
+//				dbc.displayCatalogHash();
+//				System.out.println("expecting path= "+x);
+//				System.out.println(y);
+//				System.out.println(z);
+				
+				QueryPlan qp = new QueryPlan();
+				Operator root = qp.buildQueryPlan(SELECT, DISTINCT, ORDERBY, GROUPBY, WHERE, JOIN, FROM);
+				execute(root,outputFile);
 
 
 			}
@@ -143,6 +157,7 @@ public class BlazeDB {
 			while (tuple != null) {
 				writer.write(tuple.toString());
 				writer.newLine();
+				System.out.println(tuple.toString());
 				tuple = root.getNextTuple();
 			}
 

@@ -5,4 +5,4 @@ ed/inf/adbs/blazedb/operator/Operator.class
 ed/inf/adbs/blazedb/operator/SelectionOperator.class
 ed/inf/adbs/blazedb/TableInfo.class
 ed/inf/adbs/blazedb/operator/ScanOperator.class
-ed/inf/adbs/blazedb/QueryPlan.class
+ed/inf/adbs/blazedb/operator/QueryPlan.class

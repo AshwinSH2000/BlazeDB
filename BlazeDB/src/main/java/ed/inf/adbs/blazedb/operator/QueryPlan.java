@@ -1,7 +1,8 @@
-package ed.inf.adbs.blazedb;
+package ed.inf.adbs.blazedb.operator;
 
 import java.util.List;
 
+import ed.inf.adbs.blazedb.DatabaseCatalog;
 import net.sf.jsqlparser.expression.Expression;
 import net.sf.jsqlparser.statement.select.Distinct;
 import net.sf.jsqlparser.statement.select.FromItem;
@@ -18,8 +19,23 @@ public class QueryPlan {
 	 * @return - nothing, as of now. but might need to change it to be Operator I think, not sure. 
 	 */
 	
-	public static void buildQueryPlan(List<SelectItem<?>> SELECT, Distinct DISTINCT, List<OrderByElement> ORDERBY,
+	public static Operator buildQueryPlan(List<SelectItem<?>> SELECT, Distinct DISTINCT, List<OrderByElement> ORDERBY,
 									  GroupByElement GROUPBY, Expression WHERE, List<Join> JOIN, FromItem FROM) {
 		
+		DatabaseCatalog catalog = DatabaseCatalog.getInstance();
+		
+		//need to start from the scan op now. 
+		Operator root=new ScanOperator(FROM.toString());
+		
+		//now i am adding the from and where but i need to add the join clause sometimes. 
+//		if(WHERE!=null) {
+//			root = new SelectionOperator(root, WHERE);
+//		}
+//		
+		
+		
+		
+		
+		return root;
 	}
 }

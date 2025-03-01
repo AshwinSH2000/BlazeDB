@@ -3,7 +3,9 @@ package ed.inf.adbs.blazedb.operator;
 import java.io.*;
 import java.util.*;
 
+import ed.inf.adbs.blazedb.DatabaseCatalog;
 import ed.inf.adbs.blazedb.Tuple;
+import net.sf.jsqlparser.statement.select.FromItem;
 
 public class ScanOperator extends Operator {
 
@@ -13,10 +15,13 @@ public class ScanOperator extends Operator {
 	private List<String> schema;
 	private String currentLine;
 
-	public ScanOperator(String tableName, String dbPath, List<String> schema) {
+	public ScanOperator(String tableName) {        //			, String dbPath, List<String> schema) {
+		
+		DatabaseCatalog catalog = DatabaseCatalog.getInstance();
+		
 		this.tableName = tableName;
-		this.filePath = dbPath + "/data/" + tableName + ".csv";
-		this.schema = schema;
+		this.filePath = catalog.getInstance().getTableFilePath(tableName);        //dbPath + "/data/" + tableName + ".csv";
+		this.schema = catalog.getInstance().getTableSchema(tableName);			  //    schema;
 		openFile();
 	}
 

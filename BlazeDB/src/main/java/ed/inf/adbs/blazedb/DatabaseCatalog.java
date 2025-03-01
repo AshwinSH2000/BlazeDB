@@ -9,6 +9,8 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import net.sf.jsqlparser.statement.select.FromItem;
+
 public class DatabaseCatalog {
 	
 	// private static makes it to have only one instance/copy of databasecCatalog. 
@@ -25,6 +27,7 @@ public class DatabaseCatalog {
 	public static DatabaseCatalog getInstance() {
 		if(instance==null) {
 			instance = new DatabaseCatalog();
+			System.out.println("created a new instance");
 		}
 		return instance;
 	}

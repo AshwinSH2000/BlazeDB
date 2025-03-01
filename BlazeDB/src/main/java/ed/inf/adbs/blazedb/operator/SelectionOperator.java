@@ -14,7 +14,12 @@ public class SelectionOperator extends Operator{
 		this.whereCondition = whereClause;
 	}
 	
+	/*
+	 * @return
+	 */
 	public boolean checkWhereClause(Tuple tuple) {
+		
+		
 		return false;
 	}
 
