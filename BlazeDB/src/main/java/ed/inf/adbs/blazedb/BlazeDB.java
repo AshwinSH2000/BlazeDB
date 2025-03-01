@@ -63,13 +63,13 @@ public class BlazeDB {
 
 		DatabaseCatalog dbc = DatabaseCatalog.getInstance();
 		dbc.loadDetails(databaseDir);
-		//dbc.displayCatalogHash();
-		String x=dbc.getTableFilePath(tableName);
-		TableInfo y=dbc.getTableInfo(tableName);
-		List<String> z=dbc.getTableSchema(tableName);
-		System.out.println(x);
-		System.out.println(y);
-		System.out.println(z);
+//		String x=dbc.getTableFilePath(tableName);
+//		TableInfo y=dbc.getTableInfo(tableName);
+//		List<String> z=dbc.getTableSchema(tableName);
+//		dbc.displayCatalogHash();
+//		System.out.println(x);
+//		System.out.println(y);
+//		System.out.println(z);
 
 	}
 
@@ -91,6 +91,7 @@ public class BlazeDB {
 				System.out.println("GROUP BY clause: " + select.getPlainSelect().getGroupBy());
 				System.out.println("ORDER BY clause: "+ select.getPlainSelect().getOrderByElements());
 				System.out.println("FROM : "+ select.getPlainSelect().getFromItem()); //but this is displaying only one table. need to examine
+				System.out.println("JOIN claise : "+select.getPlainSelect().getJoins());
 
 			}
 		} catch (Exception e) {
