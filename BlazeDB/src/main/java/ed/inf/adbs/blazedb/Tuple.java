@@ -13,8 +13,10 @@ public class Tuple {
 	List<Integer> x = new ArrayList<>();
 	
 	public void add(int value) {
-		//System.out.println(value + " is inside the add function");
 		x.add(value);
+		
+		//System.out.println(value + " is added to the tuple");
+
 	}	
 	
 }

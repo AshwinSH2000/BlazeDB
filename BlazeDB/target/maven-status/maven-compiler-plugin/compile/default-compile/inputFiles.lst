@@ -1,6 +1,8 @@
 /Users/ashwinsh/Documents/Edinburgh/ADBS/cw/BlazeDB/src/main/java/ed/inf/adbs/blazedb/operator/ScanOperator.java
 /Users/ashwinsh/Documents/Edinburgh/ADBS/cw/BlazeDB/src/main/java/ed/inf/adbs/blazedb/TableInfo.java
+/Users/ashwinsh/Documents/Edinburgh/ADBS/cw/BlazeDB/src/main/java/ed/inf/adbs/blazedb/operator/SelectionOperator.java
 /Users/ashwinsh/Documents/Edinburgh/ADBS/cw/BlazeDB/src/main/java/ed/inf/adbs/blazedb/operator/Operator.java
 /Users/ashwinsh/Documents/Edinburgh/ADBS/cw/BlazeDB/src/main/java/ed/inf/adbs/blazedb/DatabaseCatalog.java
 /Users/ashwinsh/Documents/Edinburgh/ADBS/cw/BlazeDB/src/main/java/ed/inf/adbs/blazedb/BlazeDB.java
 /Users/ashwinsh/Documents/Edinburgh/ADBS/cw/BlazeDB/src/main/java/ed/inf/adbs/blazedb/Tuple.java
+/Users/ashwinsh/Documents/Edinburgh/ADBS/cw/BlazeDB/src/main/java/ed/inf/adbs/blazedb/QueryPlan.java

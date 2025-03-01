@@ -40,7 +40,7 @@ public class ScanOperator extends Operator {
 				System.out.println();
 				for (String value : values) {
 					//       System.out.println("Ths is in getNextTuple function: " + value );
-					System.out.print(value + " ");
+					System.out.print(value + "\t");
 					tuple.add(Integer.parseInt(value.trim()));
 				}
 				System.out.println();

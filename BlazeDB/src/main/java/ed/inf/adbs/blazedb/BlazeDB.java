@@ -7,9 +7,16 @@ import java.io.IOException;
 import java.util.Arrays;
 import java.util.List;
 
+import net.sf.jsqlparser.expression.Expression;
 import net.sf.jsqlparser.parser.CCJSqlParserUtil;
 import net.sf.jsqlparser.statement.Statement;
+import net.sf.jsqlparser.statement.select.Distinct;
+import net.sf.jsqlparser.statement.select.FromItem;
+import net.sf.jsqlparser.statement.select.GroupByElement;
+import net.sf.jsqlparser.statement.select.Join;
+import net.sf.jsqlparser.statement.select.OrderByElement;
 import net.sf.jsqlparser.statement.select.Select;
+import net.sf.jsqlparser.statement.select.SelectItem;
 import ed.inf.adbs.blazedb.operator.Operator;
 import ed.inf.adbs.blazedb.operator.ScanOperator;
 
@@ -63,13 +70,13 @@ public class BlazeDB {
 
 		DatabaseCatalog dbc = DatabaseCatalog.getInstance();
 		dbc.loadDetails(databaseDir);
-//		String x=dbc.getTableFilePath(tableName);
-//		TableInfo y=dbc.getTableInfo(tableName);
-//		List<String> z=dbc.getTableSchema(tableName);
-//		dbc.displayCatalogHash();
-//		System.out.println(x);
-//		System.out.println(y);
-//		System.out.println(z);
+		//		String x=dbc.getTableFilePath(tableName);
+		//		TableInfo y=dbc.getTableInfo(tableName);
+		//		List<String> z=dbc.getTableSchema(tableName);
+		//		dbc.displayCatalogHash();
+		//		System.out.println(x);
+		//		System.out.println(y);
+		//		System.out.println(z);
 
 	}
 
@@ -83,15 +90,34 @@ public class BlazeDB {
 			Statement statement = CCJSqlParserUtil.parse(new FileReader(filename));
 			//            Statement statement = CCJSqlParserUtil.parse("SELECT Course.cid, Student.name FROM Course, Student WHERE Student.sid = 3");
 			if (statement != null) {
+
+				//create the necessary variables to hold the parsed and broken down SQL commands
+				List<SelectItem<?>> SELECT;
+				Distinct DISTINCT;
+				List<OrderByElement> ORDERBY;
+				GroupByElement GROUPBY;
+				Expression WHERE;
+				List<Join> JOIN;
+				FromItem FROM;
 				Select select = (Select) statement;
+
+				SELECT=select.getPlainSelect().getSelectItems();
+				FROM=select.getPlainSelect().getFromItem();
+				JOIN=select.getPlainSelect().getJoins();
+				WHERE=select.getPlainSelect().getWhere();
+				GROUPBY=select.getPlainSelect().getGroupBy();
+				ORDERBY=select.getPlainSelect().getOrderByElements();
+				DISTINCT=select.getPlainSelect().getDistinct();
+
 				System.out.println("Statement: " + select);
-				System.out.println("SELECT items: " + select.getPlainSelect().getSelectItems());
-				System.out.println("DISTINCT clause: "+ select.getPlainSelect().getDistinct());
-				System.out.println("WHERE expression: " + select.getPlainSelect().getWhere());
-				System.out.println("GROUP BY clause: " + select.getPlainSelect().getGroupBy());
-				System.out.println("ORDER BY clause: "+ select.getPlainSelect().getOrderByElements());
-				System.out.println("FROM : "+ select.getPlainSelect().getFromItem()); //but this is displaying only one table. need to examine
-				System.out.println("JOIN claise : "+select.getPlainSelect().getJoins());
+				System.out.println("SELECT : " + SELECT);
+				System.out.println("DISTINCT : "+ DISTINCT);
+				System.out.println("WHERE : " + WHERE);
+				System.out.println("GROUP BY : " + GROUPBY);
+				System.out.println("ORDER BY : "+ ORDERBY);
+				System.out.println("FROM : "+ FROM);				 //but this is displaying only one table. rest in getJoin
+				System.out.println("JOIN  : "+JOIN);
+
 
 			}
 		} catch (Exception e) {
