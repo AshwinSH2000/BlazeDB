@@ -166,12 +166,15 @@ public class EvaluateSelection extends ExpressionDeParser{
     @Override
     public void visit(NotEqualsTo expr) {
     	processBinaryExpression(expr);
-
     }
 	
 	@Override
     public void visit(Column column) {
+		
+		//System.out.println("THE COLUMN INSIDE THE VISIT FUNCTION IS "+column);
         String columnName = column.getColumnName();
+		//System.out.println("THE COLUMNNAME INSIDE THE VISIT FUNCTION IS "+columnName);
+
         if (attributeHashIndex.containsKey(columnName)) {
             currentValue = tuple.get(attributeHashIndex.get(columnName)).toString();
             System.out.println("The current column value is ASHWINSH MAN "+currentValue);

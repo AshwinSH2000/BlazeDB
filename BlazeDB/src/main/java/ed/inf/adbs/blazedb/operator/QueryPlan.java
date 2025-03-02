@@ -35,10 +35,10 @@ public class QueryPlan {
 			System.out.println("Going to wrap selection operator");
 			root = new SelectionOperator(root, WHERE, attributeHashIndex);
 		}
-//		
-//		if(!SELECT.contains("*")) {
-//			root = new ProjectionOperator(root, SELECT);
-//		}
+		
+		if(!SELECT.contains("*")) {
+			root = new ProjectionOperator(root, SELECT, attributeHashIndex);
+		}
 		
 		
 		

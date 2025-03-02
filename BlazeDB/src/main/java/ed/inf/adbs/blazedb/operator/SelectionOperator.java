@@ -32,7 +32,6 @@ public class SelectionOperator extends Operator{
 			if(tuple==null) {
 				return null;
 			}
-			System.out.println("BEFOOOOOOOOORRRRRRRRREEEEEEEEEEEEEE");
 			EvaluateSelection evalSelection = new EvaluateSelection(attributeHashIndex,tuple);
 
 //			
@@ -45,10 +44,9 @@ public class SelectionOperator extends Operator{
 			
 			
 			if(evalSelection.evaluate(whereCondition)) {
-				System.out.println(tuple + "is one of the tuple tp satidfy the where clause");
+//				System.out.println(tuple + "is one of the tuple to satisfy the where clause");
 				return tuple;
 			}
-			System.out.println("AFTTTTTTTTTTTTTTTEEEEEEEEEERRRRRRRR");
 		}
 	}
 
