@@ -54,7 +54,7 @@ public class DatabaseCatalog {
         		List<String> tableAttributes = new ArrayList<>();
         		int index=1;
         		while(index < cols.length) {
-        			System.out.println("cols[index] is "+cols[index]);
+        			//System.out.println("cols[index] is "+cols[index]);
         			tableAttributes.add(cols[index]);
         			index++;
         		}

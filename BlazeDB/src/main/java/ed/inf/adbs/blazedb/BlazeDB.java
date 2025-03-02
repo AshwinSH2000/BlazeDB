@@ -67,7 +67,6 @@ public class BlazeDB {
 		dbc.loadDetails(databaseDir);
 		
 		
-		System.out.println("Hope this is after creating the new iinstance");
 		parsingExample(inputFile, outputFile);
 
 		//		String x=dbc.getTableFilePath(tableName);

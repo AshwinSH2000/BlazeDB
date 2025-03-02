@@ -14,14 +14,25 @@ public class ScanOperator extends Operator {
 	private String filePath;
 	private List<String> schema;
 	private String currentLine;
+	private Map<String, Integer> attributeHashIndex;
 
-	public ScanOperator(String tableName) {        //			, String dbPath, List<String> schema) {
+	public ScanOperator(String tableName) {       
 		
 		DatabaseCatalog catalog = DatabaseCatalog.getInstance();
 		
 		this.tableName = tableName;
-		this.filePath = catalog.getInstance().getTableFilePath(tableName);        //dbPath + "/data/" + tableName + ".csv";
-		this.schema = catalog.getInstance().getTableSchema(tableName);			  //    schema;
+		this.filePath = catalog.getInstance().getTableFilePath(tableName);       
+		this.schema = catalog.getInstance().getTableSchema(tableName);			  
+		this.attributeHashIndex = new HashMap<>();
+
+		int index=0;
+		for(String x:  this.schema) {
+			attributeHashIndex.put(x, index++);
+		}
+		
+//		for(String x: this.schema) {
+//			System.out.println("Ashwishshshsh--------"+attributeHashIndex.values());
+//		}
 		openFile();
 	}
 
@@ -63,12 +74,20 @@ public class ScanOperator extends Operator {
 	public void reset() {
 		try {
 			reader.close();
-			openFile(); // Reopen the file to reset the iterator
+			openFile(); 				// Reopen the file to reset the iterator
 		} catch (IOException e) {
 			e.printStackTrace();
 		}
 	}
-
+	
+	/*
+	 * getter function to return the hash index. 
+	 * @return - hash index mapping table attributes to their corresponding int values
+	 */
+	public Map<String, Integer> getAttributeHashIndex(){
+		return attributeHashIndex;
+	}
+	
 	public void close() {
 		try {
 			if (reader != null) {

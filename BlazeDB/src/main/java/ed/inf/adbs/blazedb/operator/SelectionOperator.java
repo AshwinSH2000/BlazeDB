@@ -1,27 +1,25 @@
 package ed.inf.adbs.blazedb.operator;
 
 import java.io.IOException;
+import java.util.Map;
 
 import ed.inf.adbs.blazedb.Tuple;
+import net.sf.jsqlparser.expression.BinaryExpression;
+import net.sf.jsqlparser.expression.Expression;
 
 public class SelectionOperator extends Operator{
 	
 	Operator root;
-	String whereCondition;
+	Expression whereCondition;
+	Map<String, Integer> attributeHashIndex;
 	
-	public SelectionOperator(Operator root, String whereClause) {
+	public SelectionOperator(Operator root, Expression whereCondition, Map<String, Integer> attributeHashIndex) {
 		this.root = root;
-		this.whereCondition = whereClause;
+		this.whereCondition = whereCondition;
+		this.attributeHashIndex = attributeHashIndex;
 	}
 	
-	/*
-	 * @return
-	 */
-	public boolean checkWhereClause(Tuple tuple) {
-		
-		
-		return false;
-	}
+
 
 	@Override
 	public Tuple getNextTuple() {
@@ -34,9 +32,23 @@ public class SelectionOperator extends Operator{
 			if(tuple==null) {
 				return null;
 			}
-			if(checkWhereClause(tuple)) {
+			System.out.println("BEFOOOOOOOOORRRRRRRRREEEEEEEEEEEEEE");
+			EvaluateSelection evalSelection = new EvaluateSelection(attributeHashIndex,tuple);
+
+//			
+//			if (whereCondition instanceof BinaryExpression) {
+//			    System.out.println("WHERE condition is a BinaryExpression!");
+//			} else {
+//			    System.out.println("WHERE condition is: " + whereCondition.getClass().getSimpleName());
+//			}
+//			
+			
+			
+			if(evalSelection.evaluate(whereCondition)) {
+				System.out.println(tuple + "is one of the tuple tp satidfy the where clause");
 				return tuple;
 			}
+			System.out.println("AFTTTTTTTTTTTTTTTEEEEEEEEEERRRRRRRR");
 		}
 	}
 
@@ -54,6 +66,14 @@ public class SelectionOperator extends Operator{
 		//will there be any nonsense happening if i call this inside selectionoperator?
 		root.reset();
 		
+	}
+
+
+
+	@Override
+	protected Map<String, Integer> getAttributeHashIndex() {
+		// TODO Auto-generated method stub
+		return null;
 	}
 
 }

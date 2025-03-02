@@ -35,8 +35,10 @@ public class Tuple {
 		}
 		
 		return rowData;
+	}
+
+	public Integer get(Integer num) {
+		return x.get(num);
 	}	
-	
-	
-	
+		
 }

@@ -1,6 +1,7 @@
 package ed.inf.adbs.blazedb.operator;
 
 import java.util.List;
+import java.util.Map;
 
 import ed.inf.adbs.blazedb.DatabaseCatalog;
 import net.sf.jsqlparser.expression.Expression;
@@ -26,12 +27,18 @@ public class QueryPlan {
 		
 		//need to start from the scan op now. 
 		Operator root=new ScanOperator(FROM.toString());
+		Map<String, Integer> attributeHashIndex = root.getAttributeHashIndex();
+		//this might give ERROR ERROR later on because i changed the datatype of root from operator to scanoperator.
 		
 		//now i am adding the from and where but i need to add the join clause sometimes. 
-//		if(WHERE!=null) {
-//			root = new SelectionOperator(root, WHERE);
-//		}
+		if(WHERE!=null) {
+			System.out.println("Going to wrap selection operator");
+			root = new SelectionOperator(root, WHERE, attributeHashIndex);
+		}
 //		
+//		if(!SELECT.contains("*")) {
+//			root = new ProjectionOperator(root, SELECT);
+//		}
 		
 		
 		
