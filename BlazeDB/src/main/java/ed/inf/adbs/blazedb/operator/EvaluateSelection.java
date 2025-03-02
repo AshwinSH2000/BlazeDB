@@ -10,7 +10,10 @@ import net.sf.jsqlparser.expression.LongValue;
 import net.sf.jsqlparser.expression.operators.conditional.AndExpression;
 import net.sf.jsqlparser.expression.operators.relational.EqualsTo;
 import net.sf.jsqlparser.expression.operators.relational.GreaterThan;
+import net.sf.jsqlparser.expression.operators.relational.GreaterThanEquals;
 import net.sf.jsqlparser.expression.operators.relational.MinorThan;
+import net.sf.jsqlparser.expression.operators.relational.MinorThanEquals;
+import net.sf.jsqlparser.expression.operators.relational.NotEqualsTo;
 import net.sf.jsqlparser.schema.Column;
 import net.sf.jsqlparser.util.deparser.ExpressionDeParser;
 
@@ -96,8 +99,45 @@ public class EvaluateSelection extends ExpressionDeParser{
     	
     	result = (leftValue < rightValue);
     	
-    	System.out.println("Naa illiddeeeeeee...balle balleee result = "+result);
+    	System.out.println("binary expression result = "+result);
     }
+    
+    public void processBinaryExpression(GreaterThanEquals expr) {
+    	expr.getLeftExpression().accept(this);
+    	int leftValue = Integer.parseInt(currentValue); // left operand
+
+    	expr.getRightExpression().accept(this);
+    	int rightValue = Integer.parseInt(currentValue); //  right operand
+    	
+    	result = (leftValue >= rightValue);
+    	
+    	System.out.println("binary expression result = "+result);
+    }
+    
+    public void processBinaryExpression(MinorThanEquals expr) {
+    	expr.getLeftExpression().accept(this);
+    	int leftValue = Integer.parseInt(currentValue); // left operand
+
+    	expr.getRightExpression().accept(this);
+    	int rightValue = Integer.parseInt(currentValue); //  right operand
+    	
+    	result = (leftValue <= rightValue);
+    	
+    	System.out.println("binary expression result = "+result);
+    }
+    
+    public void processBinaryExpression(NotEqualsTo expr) {
+    	expr.getLeftExpression().accept(this);
+    	int leftValue = Integer.parseInt(currentValue); // left operand
+
+    	expr.getRightExpression().accept(this);
+    	int rightValue = Integer.parseInt(currentValue); //  right operand
+    	
+    	result = (leftValue != rightValue);
+    	
+    	System.out.println("binary expression result = "+result);
+    }
+
     
     @Override
     public void visit(EqualsTo expr) {
@@ -112,6 +152,22 @@ public class EvaluateSelection extends ExpressionDeParser{
     public void visit(MinorThan expr) {
         processBinaryExpression(expr);
     }
+    
+    @Override
+    public void visit(GreaterThanEquals expr) {
+    	processBinaryExpression(expr);
+    }
+    
+    @Override
+    public void visit(MinorThanEquals expr) {
+    	processBinaryExpression(expr);
+    }
+    
+    @Override
+    public void visit(NotEqualsTo expr) {
+    	processBinaryExpression(expr);
+
+    }
 	
 	@Override
     public void visit(Column column) {
@@ -125,7 +181,7 @@ public class EvaluateSelection extends ExpressionDeParser{
     @Override
     public void visit(LongValue longValue) {
         currentValue = String.valueOf(longValue.getValue());
-        System.out.println("Inside the visit(long)...identakeee");
+        System.out.println("Inside the visit(long)...identakeee "+ currentValue);
 
     }
 
