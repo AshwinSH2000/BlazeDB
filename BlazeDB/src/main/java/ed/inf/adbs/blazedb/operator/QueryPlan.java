@@ -36,9 +36,9 @@ public class QueryPlan {
 			root = new SelectionOperator(root, WHERE, attributeHashIndex);
 		}
 		
-		if(!SELECT.contains("*")) {
-			root = new ProjectionOperator(root, SELECT, attributeHashIndex);
-		}
+//		if(!SELECT.contains("*")) {
+//			root = new ProjectionOperator(root, SELECT, attributeHashIndex);
+//		}
 		
 		
 		
