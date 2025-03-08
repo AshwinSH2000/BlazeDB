@@ -9,9 +9,9 @@ import net.sf.jsqlparser.expression.Expression;
 
 public class SelectionOperator extends Operator{
 	
-	Operator root;
-	Expression whereCondition;
-	Map<String, Integer> attributeHashIndex;
+	private Operator root;
+	private Expression whereCondition;
+	private Map<String, Integer> attributeHashIndex;
 	
 	public SelectionOperator(Operator root, Expression whereCondition, Map<String, Integer> attributeHashIndex) {
 		this.root = root;

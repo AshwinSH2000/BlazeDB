@@ -18,6 +18,13 @@ public class Tuple {
 		x.add(value);
 		//System.out.println(value + " is added to the tuple");
 	}
+	
+	//a method to add the entire passed tuple into a current tuple 
+	public void addTuple(Tuple tup) {
+		for (Integer number : tup.x) {
+			x.add(number);
+		}
+	}
 
 	@Override
 	public String toString() {
@@ -38,5 +45,9 @@ public class Tuple {
 	public Integer get(Integer num) {
 		return x.get(num);
 	}	
+	
+	public List<Integer> getTupleValues() {
+		return x;
+	}
 		
 }

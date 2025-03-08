@@ -14,10 +14,10 @@ import net.sf.jsqlparser.statement.select.SelectItem;
 public class ProjectionOperator extends Operator {
 
 	
-	Operator root;
-	List<SelectItem<?>> SELECT;
-	Map<String, Integer> attributeHashIndex;
-	List<String> colsToBeProjected;
+	private Operator root;
+	private List<SelectItem<?>> SELECT;
+	private Map<String, Integer> attributeHashIndex;
+	private List<String> colsToBeProjected;
 
 	
 	public ProjectionOperator(Operator root, List<SelectItem<?>> SELECT, Map<String, Integer> attributeHashIndex) {
