@@ -59,10 +59,37 @@ public class QueryPlan {
 
 			System.out.println(FROM.toString()+" lallalla "+JOIN.toString());
 			for( Join join : JOIN) {
+				//System.out.println("join var = "+join.toString());
+				
+				//need to extract the join clause. see the optimal methods. 
 
 				//this loop is to iteratively handle all the tables in JOIN but as of not it is just focussing on one table. 
 				//maybe create a List of Joins again to have multiple tables on the fly
-				rightChild = new ScanOperator(join.toString());
+				
+				
+				rightChild = new ScanOperator(join.getRightItem().toString());
+				//seems like the queries consist of only simpleJoin (mostly) and InnerJoin. sp going ahead with them for timebeing. 
+//				System.out.println("displayng the rightitem: "+join.getRightItem().toString());
+//				System.out.println("displaying the isjoin iscross: "+join.isCross() );
+//				System.out.println("displaying the isjoin issimple: "+join.isSimple() );
+//				System.out.println("displaying the isjoin isapply: "+join.isApply() );
+//				System.out.println("displaying the isjoin isfull: "+join.isFull() );
+//				System.out.println("displaying the isjoin isinner: "+join.isInner() );
+//				System.out.println("displaying the isjoin isinnerjoin: "+join.isInnerJoin() );
+//				System.out.println("displaying the isjoin isleft: "+join.isLeft() );
+//				System.out.println("displaying the isjoin isnatural: "+join.isNatural() );
+//				System.out.println("displaying the isjoin isouter: "+join.isOuter() );
+//				System.out.println("displaying the isjoin isright: "+join.isRight() );
+//				System.out.println("displaying the isjoin issemi: "+join.isSemi() );
+//				System.out.println("displaying the isjoin isstraight: "+join.isStraight() );
+//				System.out.println("displaying the isjoin iswindow: "+join.isWindowJoin() );
+//				System.out.println("displaying the isjoin isglobal: "+join.isGlobal() );
+				
+				//if there are where clause for a single table, filter that before hand and then give it to join.
+				//if there are where clause for joining the tables, then i think it is better to iterate over and then figure out which
+				//tuples to join based on the condition after checking each tuple.
+
+				
 				//exp = join.getOnExpression();
 				
 
