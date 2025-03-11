@@ -1,11 +1,16 @@
 package ed.inf.adbs.blazedb.operator;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
 import ed.inf.adbs.blazedb.DatabaseCatalog;
 import net.sf.jsqlparser.expression.BinaryExpression;
 import net.sf.jsqlparser.expression.Expression;
+import net.sf.jsqlparser.expression.operators.conditional.AndExpression;
+import net.sf.jsqlparser.expression.operators.conditional.OrExpression;
+import net.sf.jsqlparser.expression.operators.relational.GreaterThan;
+import net.sf.jsqlparser.expression.operators.relational.GreaterThanEquals;
 import net.sf.jsqlparser.schema.Column;
 import net.sf.jsqlparser.statement.select.Distinct;
 import net.sf.jsqlparser.statement.select.FromItem;
@@ -27,6 +32,8 @@ public class QueryPlan {
 									  GroupByElement GROUPBY, Expression WHERE, List<Join> JOIN, FromItem FROM) {
 		
 		DatabaseCatalog catalog = DatabaseCatalog.getInstance();
+		
+		
 		
 		// IMPORTANT! NOW YOU NEED TO CHECK THE NUMBER OF TABLES BEFORE YOU ASSIGN THE ROOT AS SCANOPERATOR. 
 		// IN CASE, THERE IS JUST A TABLE, PROCEED. 
@@ -58,9 +65,23 @@ public class QueryPlan {
 			Operator leftChild = new ScanOperator(FROM.toString());
 			Map<String, Integer> attributeHashIndex_lChild = leftChild.getAttributeHashIndex();
 			
+			
+			
 			Expression exp = null;
 
 			System.out.println(FROM.toString()+" lallalla "+JOIN.toString());
+			
+			//split the where clause	
+			List<Expression> listExp = splitExpression(WHERE);
+			
+			List<Expression> temp=conditionForTable(listExp, FROM.toString());
+			System.out.println("hi hello namaste.................................."+temp.toString());
+
+			
+			//next have to verify for each table if a projection is valid for it
+			//function tha ttakes tablename, listExp ... checks each exp if there is a clause matching it. 
+			//if matching, it returns the clause else null
+			
 			
 			for( Join join : JOIN) {
 				//System.out.println("join var = "+join.toString());
@@ -70,7 +91,10 @@ public class QueryPlan {
 				//this loop is to iteratively handle all the tables in JOIN but as of not it is just focussing on one table. 
 				//maybe create a List of Joins again to have multiple tables on the fly
 				
-				
+				List<Expression> temp2=conditionForTable(listExp, join.toString());
+				System.out.println("hi hello namaste.................................."+temp2.toString());
+
+
 				Operator rightChild = new ScanOperator(join.getRightItem().toString());
 				Map<String, Integer> attributeHashIndex_rChild = rightChild.getAttributeHashIndex();
 				
@@ -145,18 +169,96 @@ public class QueryPlan {
 		return null;
 		
 	}
-//	private static boolean isConditionForTable(Expression whereClause, String tableName) {
-//        if (whereClause instanceof BinaryExpression binaryExpr) {
+	
+	
+	private static List<Expression> conditionForTable(List<Expression> listExp, String table) {
+       
+//		if (listExp instanceof BinaryExpression binaryExpr) {
 //            Expression left = binaryExpr.getLeftExpression();
 //            Expression right = binaryExpr.getRightExpression();
 //
 //            if (left instanceof Column leftColumn && leftColumn.getTable() != null) {
-//                return leftColumn.getTable().getName().equalsIgnoreCase(tableName);
+//                return leftColumn.getTable().getName().equalsIgnoreCase(table);
 //            }
 //            if (right instanceof Column rightColumn && rightColumn.getTable() != null) {
-//                return rightColumn.getTable().getName().equalsIgnoreCase(tableName);
+//                return rightColumn.getTable().getName().equalsIgnoreCase(table);
 //            }
 //        }
-//        return false;
-//    }
+		
+		List<Expression> returnClause = new ArrayList<>();
+		
+		for(Expression exp: listExp) {
+			if (exp instanceof GreaterThan)
+			{
+				GreaterThan e = (GreaterThan) exp;
+				//does this work? need to see
+				System.out.println("printing leftExpression "+e.getLeftExpression());
+				System.out.println("priting right edpression "+e.getRightExpression());
+				System.out.println("prining tablename "+table);
+				System.out.println( e.getRightExpression() instanceof Column );
+				
+//				here i pass the entire list of where expr and also the table name
+//				if i find a clause associated with a table, i thought of returning it directly initially
+//				but there can be a case where two clauses are associated with a same table say A.a>5 and A.b<6
+//				So i feel I need to create an expression and then return it. 
+				
+				if //this checks if the where clause for the table is a single table where clause or not
+				(		   (e.getLeftExpression().toString().toLowerCase().contains(table.toLowerCase())  
+						&& e.getRightExpression().toString().toLowerCase().contains(table.toLowerCase()))
+						||
+						   (e.getLeftExpression().toString().toLowerCase().contains(table.toLowerCase())  
+						&& !(e.getRightExpression() instanceof Column))
+						||
+						   (e.getRightExpression().toString().toLowerCase().contains(table.toLowerCase())
+						&& !(e.getLeftExpression() instanceof Column))
+						
+				) 
+				{
+					System.out.println("\n-----Single table");
+					returnClause.add(e);
+					
+				}
+				
+				//if(e.getLeftExpression().toString().toLowerCase()) {}
+					
+					
+				//if lhs contains rhs, then single tbale exp yes
+				//if lhs has the table name and rhs is a constant then yes
+				//if rhs is a table name and lhs is a constant then yes
+					
+				//
+				
+				
+			}
+		}
+		
+        return returnClause;
+    }
+	
+	
+	
+	public static List<Expression> splitExpression(Expression expression) {
+        List<Expression> expressions = new ArrayList<>();
+        
+        //if the expression is a logical conjunction and/or then split it recursively
+        if (expression instanceof AndExpression) {
+            AndExpression andExpression = (AndExpression) expression;
+            
+            expressions.addAll(splitExpression(andExpression.getLeftExpression()));
+            expressions.addAll(splitExpression(andExpression.getRightExpression()));
+        } 
+        //the below wont be of much use to this program as its just conjunction but added anyway to test custom queries. 
+        else if (expression instanceof OrExpression) {
+            OrExpression orExpression = (OrExpression) expression;
+            
+            expressions.addAll(splitExpression(orExpression.getLeftExpression()));
+            expressions.addAll(splitExpression(orExpression.getRightExpression()));
+        } 
+        else {
+            // Base case: simple expression
+            expressions.add(expression);
+        }
+        
+        return expressions;
+    }
 }
