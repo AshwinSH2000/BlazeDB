@@ -1,1 +1,1 @@
-SELECT * FROM Student CROSS JOIN Course;
+SELECT * FROM Student, Course, Enrolled;

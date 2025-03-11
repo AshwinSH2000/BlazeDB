@@ -35,6 +35,10 @@ public class ScanOperator extends Operator {
 //		}
 		openFile();
 	}
+	
+	public List<String> getSchema(){
+		return this.schema;
+	}
 
 	private void openFile() {
 		try {

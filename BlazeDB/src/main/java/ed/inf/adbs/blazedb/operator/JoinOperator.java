@@ -14,14 +14,19 @@ public class JoinOperator extends Operator{
 	private Expression joinExpression;
 	private Tuple leftTuple;
 	private Tuple rightTuple;
+	private Map<String, Integer> attributeHashIndex;
+
 	
 	
 	public JoinOperator(Operator lChild, Operator rChild){//, Expression exp) {
 		this.leftChild = lChild;
 		this.rightChild = rChild;
 		//this.joinExpression = exp;
-		leftTuple = leftChild.getNextTuple();
-		rightTuple = null;
+		this.leftTuple = leftChild.getNextTuple();
+		this.rightTuple = null;
+		this.attributeHashIndex = null;
+		
+	
 		
 	}
 
@@ -87,7 +92,7 @@ public class JoinOperator extends Operator{
 	@Override
 	protected Map<String, Integer> getAttributeHashIndex() {
 		// TODO Auto-generated method stub
-		return null;
+		return attributeHashIndex;
 	}
 
 }

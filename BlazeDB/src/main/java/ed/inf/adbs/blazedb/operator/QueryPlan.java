@@ -4,7 +4,9 @@ import java.util.List;
 import java.util.Map;
 
 import ed.inf.adbs.blazedb.DatabaseCatalog;
+import net.sf.jsqlparser.expression.BinaryExpression;
 import net.sf.jsqlparser.expression.Expression;
+import net.sf.jsqlparser.schema.Column;
 import net.sf.jsqlparser.statement.select.Distinct;
 import net.sf.jsqlparser.statement.select.FromItem;
 import net.sf.jsqlparser.statement.select.GroupByElement;
@@ -54,10 +56,12 @@ public class QueryPlan {
 		
 		if(JOIN!=null) {
 			Operator leftChild = new ScanOperator(FROM.toString());
-			Operator rightChild = null ;
+			Map<String, Integer> attributeHashIndex_lChild = leftChild.getAttributeHashIndex();
+			
 			Expression exp = null;
 
 			System.out.println(FROM.toString()+" lallalla "+JOIN.toString());
+			
 			for( Join join : JOIN) {
 				//System.out.println("join var = "+join.toString());
 				
@@ -67,7 +71,16 @@ public class QueryPlan {
 				//maybe create a List of Joins again to have multiple tables on the fly
 				
 				
-				rightChild = new ScanOperator(join.getRightItem().toString());
+				Operator rightChild = new ScanOperator(join.getRightItem().toString());
+				Map<String, Integer> attributeHashIndex_rChild = rightChild.getAttributeHashIndex();
+				
+				if (WHERE != null)// && isConditionForTable(WHERE, join.getRightItem().toString())) {
+				{    System.out.println("Applying SelectionOperator for " + join.getRightItem().toString());
+	                rightChild = new SelectionOperator(rightChild, WHERE, attributeHashIndex_rChild);
+	            }
+				
+				leftChild = new JoinOperator(leftChild, rightChild);
+
 				//seems like the queries consist of only simpleJoin (mostly) and InnerJoin. sp going ahead with them for timebeing. 
 //				System.out.println("displayng the rightitem: "+join.getRightItem().toString());
 //				System.out.println("displaying the isjoin iscross: "+join.isCross() );
@@ -95,8 +108,26 @@ public class QueryPlan {
 
 			}
 			
-			Operator root = new JoinOperator(leftChild, rightChild);//, exp);
-			return root;
+			//initially I added an if clause for if(WHERE==null) but realised its not reqd. despite presence/absense of where clause, i need tohave a join operator because JOIN clause is not null
+//			Operator root = new JoinOperator(leftChild, rightChild, exp);
+			
+			//this wont work directly, needto write a function to concatenate the hasindex of two child tables.  
+			//write this function in the join operator. 			
+			
+//			if(WHERE!=null) {
+//				System.out.println("Going to wrap selection operator to the join operator");
+//				//need to combine leftand right attributeHashJoins to use in where clause. 
+//				for(String key: attributeHashIndex_lChild.keySet()) {
+//					root.addMapValue(FROM.toString()+"."+key, attributeHashIndex_lChild.get(key));
+//				}
+//				for(String key: attributeHashIndex_rChild.keySet()) {
+//					root.addMapValue(.toString()+"."+key, attributeHashIndex_lChild.get(key));
+//				}
+//				root = new SelectionOperator(root, WHERE,  );
+//			}
+			
+			
+			return leftChild;
 			
 		}
 		
@@ -114,4 +145,18 @@ public class QueryPlan {
 		return null;
 		
 	}
+//	private static boolean isConditionForTable(Expression whereClause, String tableName) {
+//        if (whereClause instanceof BinaryExpression binaryExpr) {
+//            Expression left = binaryExpr.getLeftExpression();
+//            Expression right = binaryExpr.getRightExpression();
+//
+//            if (left instanceof Column leftColumn && leftColumn.getTable() != null) {
+//                return leftColumn.getTable().getName().equalsIgnoreCase(tableName);
+//            }
+//            if (right instanceof Column rightColumn && rightColumn.getTable() != null) {
+//                return rightColumn.getTable().getName().equalsIgnoreCase(tableName);
+//            }
+//        }
+//        return false;
+//    }
 }
