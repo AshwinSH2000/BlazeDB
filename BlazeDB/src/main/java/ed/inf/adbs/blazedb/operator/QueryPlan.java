@@ -5,12 +5,15 @@ import java.util.List;
 import java.util.Map;
 
 import ed.inf.adbs.blazedb.DatabaseCatalog;
+//import ed.inf.adbs.blazedb.ExpressionCombiner;
 import net.sf.jsqlparser.expression.BinaryExpression;
 import net.sf.jsqlparser.expression.Expression;
+import net.sf.jsqlparser.expression.ExpressionVisitor;
 import net.sf.jsqlparser.expression.operators.conditional.AndExpression;
 import net.sf.jsqlparser.expression.operators.conditional.OrExpression;
 import net.sf.jsqlparser.expression.operators.relational.GreaterThan;
 import net.sf.jsqlparser.expression.operators.relational.GreaterThanEquals;
+import net.sf.jsqlparser.parser.SimpleNode;
 import net.sf.jsqlparser.schema.Column;
 import net.sf.jsqlparser.statement.select.Distinct;
 import net.sf.jsqlparser.statement.select.FromItem;
@@ -19,6 +22,8 @@ import net.sf.jsqlparser.statement.select.Join;
 import net.sf.jsqlparser.statement.select.OrderByElement;
 import net.sf.jsqlparser.statement.select.Select;
 import net.sf.jsqlparser.statement.select.SelectItem;
+import net.sf.jsqlparser.expression.operators.conditional.AndExpression;
+
 
 public class QueryPlan {
 	
@@ -67,7 +72,7 @@ public class QueryPlan {
 			
 			
 			
-			Expression exp = null;
+			//Expression exp = null;
 
 			System.out.println(FROM.toString()+" lallalla "+JOIN.toString());
 			
@@ -75,7 +80,13 @@ public class QueryPlan {
 			List<Expression> listExp = splitExpression(WHERE);
 			
 			List<Expression> temp=conditionForTable(listExp, FROM.toString());
-			System.out.println("hi hello namaste.................................."+temp.toString());
+			if(!temp.isEmpty()) {
+				System.out.println("hi hello namaste.............found a where clause for table..........." + temp.toString());
+				Expression tableOneClause = combineWithAnd(temp);
+				System.out.println("hi hello namaste.............joined expr for above clause..........." + tableOneClause.toString());
+				leftChild = new SelectionOperator(leftChild, tableOneClause, attributeHashIndex_lChild);
+
+			}
 
 			
 			//next have to verify for each table if a projection is valid for it
@@ -91,17 +102,26 @@ public class QueryPlan {
 				//this loop is to iteratively handle all the tables in JOIN but as of not it is just focussing on one table. 
 				//maybe create a List of Joins again to have multiple tables on the fly
 				
-				List<Expression> temp2=conditionForTable(listExp, join.toString());
-				System.out.println("hi hello namaste.................................."+temp2.toString());
-
+				
 
 				Operator rightChild = new ScanOperator(join.getRightItem().toString());
 				Map<String, Integer> attributeHashIndex_rChild = rightChild.getAttributeHashIndex();
+				List<Expression> temp2=conditionForTable(listExp, join.toString());
+				System.out.println("I am printing the value of temp2 wen there is no hwere claise: "+temp2.toString());
+				if(!temp2.isEmpty())
+				{
+					System.out.println("hi hello namaste.............found a where clause for table..........." + temp2.toString());
+					Expression tableTwoClause = combineWithAnd(temp2);
+					System.out.println("hi hello namaste.............joined expr for above clause..........." + tableTwoClause.toString());
+
+					rightChild = new SelectionOperator(rightChild, tableTwoClause, attributeHashIndex_rChild);
+				}
 				
-				if (WHERE != null)// && isConditionForTable(WHERE, join.getRightItem().toString())) {
-				{    System.out.println("Applying SelectionOperator for " + join.getRightItem().toString());
-	                rightChild = new SelectionOperator(rightChild, WHERE, attributeHashIndex_rChild);
-	            }
+				
+//				if (WHERE != null && temp2!=null) {
+//				{    System.out.println("Applying SelectionOperator for " + join.getRightItem().toString());
+//	                rightChild = new SelectionOperator(rightChild, WHERE, attributeHashIndex_rChild);
+//	            }
 				
 				leftChild = new JoinOperator(leftChild, rightChild);
 
@@ -188,6 +208,9 @@ public class QueryPlan {
 		List<Expression> returnClause = new ArrayList<>();
 		
 		for(Expression exp: listExp) {
+		
+			
+			
 			if (exp instanceof GreaterThan)
 			{
 				GreaterThan e = (GreaterThan) exp;
@@ -261,4 +284,22 @@ public class QueryPlan {
         
         return expressions;
     }
+	
+	public static Expression combineWithAnd(List<Expression> expressions) {
+        if (expressions == null || expressions.isEmpty()) {
+            return null;  // No expressions to combine
+        }
+
+        // Start with the first expression
+        Expression combinedExpression = expressions.get(0);
+
+        // Iterate through the list and combine the expressions with AND
+        for (int i = 1; i < expressions.size(); i++) {
+            combinedExpression = new AndExpression(combinedExpression, expressions.get(i));
+        }
+
+        return combinedExpression;
+    }
 }
+
+

@@ -8,4 +8,5 @@
 /Users/ashwinsh/Documents/Edinburgh/ADBS/cw/BlazeDB/src/main/java/ed/inf/adbs/blazedb/operator/EvaluateSelection.java
 /Users/ashwinsh/Documents/Edinburgh/ADBS/cw/BlazeDB/src/main/java/ed/inf/adbs/blazedb/DatabaseCatalog.java
 /Users/ashwinsh/Documents/Edinburgh/ADBS/cw/BlazeDB/src/main/java/ed/inf/adbs/blazedb/BlazeDB.java
+/Users/ashwinsh/Documents/Edinburgh/ADBS/cw/BlazeDB/src/main/java/ed/inf/adbs/blazedb/ExpressionCombiner.java
 /Users/ashwinsh/Documents/Edinburgh/ADBS/cw/BlazeDB/src/main/java/ed/inf/adbs/blazedb/Tuple.java
