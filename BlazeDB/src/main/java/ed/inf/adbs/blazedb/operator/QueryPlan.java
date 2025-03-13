@@ -11,8 +11,13 @@ import net.sf.jsqlparser.expression.Expression;
 import net.sf.jsqlparser.expression.ExpressionVisitor;
 import net.sf.jsqlparser.expression.operators.conditional.AndExpression;
 import net.sf.jsqlparser.expression.operators.conditional.OrExpression;
+import net.sf.jsqlparser.expression.operators.relational.ComparisonOperator;
+import net.sf.jsqlparser.expression.operators.relational.EqualsTo;
 import net.sf.jsqlparser.expression.operators.relational.GreaterThan;
 import net.sf.jsqlparser.expression.operators.relational.GreaterThanEquals;
+import net.sf.jsqlparser.expression.operators.relational.MinorThan;
+import net.sf.jsqlparser.expression.operators.relational.MinorThanEquals;
+import net.sf.jsqlparser.expression.operators.relational.NotEqualsTo;
 import net.sf.jsqlparser.parser.SimpleNode;
 import net.sf.jsqlparser.schema.Column;
 import net.sf.jsqlparser.statement.select.Distinct;
@@ -79,10 +84,10 @@ public class QueryPlan {
 			//split the where clause	
 			List<Expression> listExp = splitExpression(WHERE);
 			
-			List<Expression> temp=conditionForTable(listExp, FROM.toString());
-			if(!temp.isEmpty()) {
-				System.out.println("hi hello namaste.............found a where clause for table..........." + temp.toString());
-				Expression tableOneClause = combineWithAnd(temp);
+			List<Expression> listTableOneClause=conditionForTable(listExp, FROM.toString());
+			if(!listTableOneClause.isEmpty()) {
+				System.out.println("hi hello namaste.............found a where clause for table..........." + listTableOneClause.toString());
+				Expression tableOneClause = combineWithAnd(listTableOneClause);
 				System.out.println("hi hello namaste.............joined expr for above clause..........." + tableOneClause.toString());
 				leftChild = new SelectionOperator(leftChild, tableOneClause, attributeHashIndex_lChild);
 
@@ -106,12 +111,12 @@ public class QueryPlan {
 
 				Operator rightChild = new ScanOperator(join.getRightItem().toString());
 				Map<String, Integer> attributeHashIndex_rChild = rightChild.getAttributeHashIndex();
-				List<Expression> temp2=conditionForTable(listExp, join.toString());
-				System.out.println("I am printing the value of temp2 wen there is no hwere claise: "+temp2.toString());
-				if(!temp2.isEmpty())
+				List<Expression> listTableTwoClause=conditionForTable(listExp, join.toString());
+				System.out.println("I am printing the value of temp2 wen there is no hwere claise: "+listTableTwoClause.toString());
+				if(!listTableTwoClause.isEmpty())
 				{
-					System.out.println("hi hello namaste.............found a where clause for table..........." + temp2.toString());
-					Expression tableTwoClause = combineWithAnd(temp2);
+					System.out.println("hi hello namaste.............found a where clause for table..........." + listTableTwoClause.toString());
+					Expression tableTwoClause = combineWithAnd(listTableTwoClause);
 					System.out.println("hi hello namaste.............joined expr for above clause..........." + tableTwoClause.toString());
 
 					rightChild = new SelectionOperator(rightChild, tableTwoClause, attributeHashIndex_rChild);
@@ -209,54 +214,75 @@ public class QueryPlan {
 		
 		for(Expression exp: listExp) {
 		
-			
+			ComparisonOperator e = null;
 			
 			if (exp instanceof GreaterThan)
 			{
-				GreaterThan e = (GreaterThan) exp;
-				//does this work? need to see
-				System.out.println("printing leftExpression "+e.getLeftExpression());
-				System.out.println("priting right edpression "+e.getRightExpression());
-				System.out.println("prining tablename "+table);
-				System.out.println( e.getRightExpression() instanceof Column );
+				 //GreaterThan e = (GreaterThan) exp;
+				e = (GreaterThan) exp;
+			}
+			
+			if (exp instanceof MinorThan)
+			{
+				e = (MinorThan) exp;
+			}
+			
+			if (exp instanceof GreaterThanEquals)
+			{
+				e = (GreaterThanEquals) exp;
+			}
+			
+			if (exp instanceof MinorThanEquals)
+			{
+				e = (MinorThanEquals) exp;
+			}
+			
+			if (exp instanceof EqualsTo)
+			{
+				e = (EqualsTo) exp;
+			}
+			
+			if (exp instanceof NotEqualsTo)
+			{
+				e = (NotEqualsTo) exp;
+			}
+			
+			//does this work? need to see
+			System.out.println("printing leftExpression "+ e.getLeftExpression());
+			System.out.println("priting right edpression "+ e.getRightExpression());
+			System.out.println("prining tablename "+table);
+			System.out.println(e.getRightExpression() instanceof Column );
 				
 //				here i pass the entire list of where expr and also the table name
 //				if i find a clause associated with a table, i thought of returning it directly initially
 //				but there can be a case where two clauses are associated with a same table say A.a>5 and A.b<6
 //				So i feel I need to create an expression and then return it. 
 				
-				if //this checks if the where clause for the table is a single table where clause or not
-				(		   (e.getLeftExpression().toString().toLowerCase().contains(table.toLowerCase())  
-						&& e.getRightExpression().toString().toLowerCase().contains(table.toLowerCase()))
-						||
-						   (e.getLeftExpression().toString().toLowerCase().contains(table.toLowerCase())  
-						&& !(e.getRightExpression() instanceof Column))
-						||
-						   (e.getRightExpression().toString().toLowerCase().contains(table.toLowerCase())
-						&& !(e.getLeftExpression() instanceof Column))
+			if //this checks if the where clause for the table is a single table where clause or not
+			(		(e.getLeftExpression().toString().toLowerCase().contains(table.toLowerCase())  
+					&& e.getRightExpression().toString().toLowerCase().contains(table.toLowerCase()))
+					||
+					(e.getLeftExpression().toString().toLowerCase().contains(table.toLowerCase())  
+					&& !(e.getRightExpression() instanceof Column))
+					||
+					(e.getRightExpression().toString().toLowerCase().contains(table.toLowerCase())
+					&& !(e.getLeftExpression() instanceof Column))
 						
-				) 
-				{
-					System.out.println("\n-----Single table");
-					returnClause.add(e);
+			) 
+			{
+				System.out.println("\n-----Single table");
+				returnClause.add(e);
 					
-				}
-				
+			}
 				//if(e.getLeftExpression().toString().toLowerCase()) {}
-					
-					
 				//if lhs contains rhs, then single tbale exp yes
 				//if lhs has the table name and rhs is a constant then yes
 				//if rhs is a table name and lhs is a constant then yes
-					
-				//
-				
-				
-			}
-		}
 		
+		}
         return returnClause;
     }
+	
 	
 	
 	
