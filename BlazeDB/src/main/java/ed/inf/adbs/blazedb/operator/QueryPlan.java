@@ -82,17 +82,25 @@ public class QueryPlan {
 			System.out.println(FROM.toString()+" lallalla "+JOIN.toString());
 			
 			//split the where clause	
-			List<Expression> listExp = splitExpression(WHERE);
 			
-			List<Expression> listTableOneClause=conditionForTable(listExp, FROM.toString());
-			if(!listTableOneClause.isEmpty()) {
-				System.out.println("hi hello namaste.............found a where clause for table..........." + listTableOneClause.toString());
-				Expression tableOneClause = combineWithAnd(listTableOneClause);
-				System.out.println("hi hello namaste.............joined expr for above clause..........." + tableOneClause.toString());
-				leftChild = new SelectionOperator(leftChild, tableOneClause, attributeHashIndex_lChild);
+			List<Expression> listExp = splitExpression(WHERE);
+
+			//do the bwlow only if where clasue is not null...need to add that clie
+			if(!(WHERE==null))
+			{
+				//System.out.println("Since there is no where clause in this sql query, i will not include the below block of statemets");
+				
+				List<Expression> listTableOneClause=conditionForTable(listExp, FROM.toString());
+				if(!listTableOneClause.isEmpty()) {
+					System.out.println("hi hello namaste.............found a where clause for table..........." + listTableOneClause.toString());
+					Expression tableOneClause = combineWithAnd(listTableOneClause);
+					System.out.println("hi hello namaste.............joined expr for above clause..........." + tableOneClause.toString());
+					leftChild = new SelectionOperator(leftChild, tableOneClause, attributeHashIndex_lChild);
+
+				}
 
 			}
-
+			
 			
 			//next have to verify for each table if a projection is valid for it
 			//function tha ttakes tablename, listExp ... checks each exp if there is a clause matching it. 
@@ -111,25 +119,47 @@ public class QueryPlan {
 
 				Operator rightChild = new ScanOperator(join.getRightItem().toString());
 				Map<String, Integer> attributeHashIndex_rChild = rightChild.getAttributeHashIndex();
-				List<Expression> listTableTwoClause=conditionForTable(listExp, join.toString());
-				System.out.println("I am printing the value of temp2 wen there is no hwere claise: "+listTableTwoClause.toString());
-				if(!listTableTwoClause.isEmpty())
-				{
-					System.out.println("hi hello namaste.............found a where clause for table..........." + listTableTwoClause.toString());
-					Expression tableTwoClause = combineWithAnd(listTableTwoClause);
-					System.out.println("hi hello namaste.............joined expr for above clause..........." + tableTwoClause.toString());
-
-					rightChild = new SelectionOperator(rightChild, tableTwoClause, attributeHashIndex_rChild);
-				}
 				
+				if(!(WHERE==null)) {
+					List<Expression> listTableTwoClause=conditionForTable(listExp, join.toString());
+					System.out.println("I am printing the value of temp2 wen there is no hwere claise: "+listTableTwoClause.toString());
+					if(!listTableTwoClause.isEmpty())
+					{
+						System.out.println("hi hello namaste.............found a where clause for table..........." + listTableTwoClause.toString());
+						Expression tableTwoClause = combineWithAnd(listTableTwoClause);
+						System.out.println("hi hello namaste.............joined expr for above clause..........." + tableTwoClause.toString());
+
+						rightChild = new SelectionOperator(rightChild, tableTwoClause, attributeHashIndex_rChild);	
+					}
+				}
 				
 //				if (WHERE != null && temp2!=null) {
 //				{    System.out.println("Applying SelectionOperator for " + join.getRightItem().toString());
 //	                rightChild = new SelectionOperator(rightChild, WHERE, attributeHashIndex_rChild);
 //	            }
 				
-				leftChild = new JoinOperator(leftChild, rightChild);
+				//need to refine this sentence. In the first itr, its ok to have FROM and join. but in all subsequent itrs, you need pass joined
+				//tables and the join
+				
+				if(!(WHERE==null)) {
+					List<Expression> listTablesJoinClause = conditionsForTwoTables(listExp,FROM.toString(),join.toString());
+					if(!listTablesJoinClause.isEmpty()) {
+						
+						Expression tablesJoinClause =  combineWithAnd(listTablesJoinClause);
+						System.out.println("Printing the single join clause joined with AND operator...lets see the op   "+ tablesJoinClause.toString());
+						leftChild = new JoinOperator(leftChild, rightChild, tablesJoinClause, attributeHashIndex_lChild, attributeHashIndex_rChild );
 
+					}
+				
+					else {
+						System.out.println("Joining the two tables with cross product because of no where join clause present. #################### ");
+						leftChild = new JoinOperator(leftChild, rightChild);
+					}
+				}	
+				else {
+					System.out.println("Joining the two tables with cross product because of no where join clause present. #################### ");
+					leftChild = new JoinOperator(leftChild, rightChild);
+				}
 				//seems like the queries consist of only simpleJoin (mostly) and InnerJoin. sp going ahead with them for timebeing. 
 //				System.out.println("displayng the rightitem: "+join.getRightItem().toString());
 //				System.out.println("displaying the isjoin iscross: "+join.isCross() );
@@ -179,6 +209,7 @@ public class QueryPlan {
 			return leftChild;
 			
 		}
+		return null;
 		
 		
 		
@@ -189,12 +220,78 @@ public class QueryPlan {
 //		System.out.println("Select contains Student.D "+ SELECT.toString().contains("Student.D"));		//true for q3
 //		System.out.println("Select contains String object s "+ SELECT.toString().contentEquals("[*]"));		 //yessss..working fine
 //		System.out.println("Select contains String object s "+ SELECT.toString().contains("[*]"));
-
-		
-		return null;
 		
 	}
 	
+	
+	private static List<Expression> conditionsForTwoTables(List<Expression> listExp, String tableOne, String tableTwo){
+		
+		System.out.println("....inside conditionsForTwoTables function...checking if this is executinng");
+		List<Expression> returnClause = new ArrayList<>();
+		
+		for(Expression exp : listExp) {
+			ComparisonOperator e = null;
+			
+			if (exp instanceof GreaterThan)
+			{
+				 //GreaterThan e = (GreaterThan) exp;
+				e = (GreaterThan) exp;
+			}
+			
+			if (exp instanceof MinorThan)
+			{
+				e = (MinorThan) exp;
+			}
+			
+			if (exp instanceof GreaterThanEquals)
+			{
+				e = (GreaterThanEquals) exp;
+			}
+			
+			if (exp instanceof MinorThanEquals)
+			{
+				e = (MinorThanEquals) exp;
+			}
+			
+			if (exp instanceof EqualsTo)
+			{
+				e = (EqualsTo) exp;
+			}
+			
+			if (exp instanceof NotEqualsTo)
+			{
+				e = (NotEqualsTo) exp;
+			}
+			
+			//cases to handle
+			//1. tbl1.col <OP> tbl2.col
+			//2. tbl2.col <OP> tbl1.col
+			
+			//for debugging
+//			System.out.println( e.getLeftExpression(). toString().toLowerCase().contains(tableOne.toLowerCase())   );
+//			System.out.println( e.getRightExpression().toString().toLowerCase().contains(tableTwo.toLowerCase())   );
+//			System.out.println( e.getLeftExpression(). toString().toLowerCase().contains(tableTwo.toLowerCase())   );
+//			System.out.println( e.getRightExpression().toString().toLowerCase().contains(tableOne.toLowerCase())   );
+			
+			
+			if
+			(
+				(e.getLeftExpression().toString().toLowerCase().contains(tableOne.toLowerCase())
+				&& e.getRightExpression().toString().toLowerCase().contains(tableTwo.toLowerCase()) )
+				||
+				(e.getLeftExpression().toString().toLowerCase().contains(tableTwo.toLowerCase())
+				&& e.getRightExpression().toString().toLowerCase().contains(tableOne.toLowerCase()))
+						
+				
+			)
+			{
+				System.out.println(".......Found a join condition for the tables: "+tableOne+" and "+tableTwo);
+				returnClause.add(e);
+			}
+		}
+		
+		return returnClause;
+	}
 	
 	private static List<Expression> conditionForTable(List<Expression> listExp, String table) {
        
@@ -286,7 +383,7 @@ public class QueryPlan {
 	
 	
 	
-	public static List<Expression> splitExpression(Expression expression) {
+	private static List<Expression> splitExpression(Expression expression) {
         List<Expression> expressions = new ArrayList<>();
         
         //if the expression is a logical conjunction and/or then split it recursively
@@ -311,7 +408,7 @@ public class QueryPlan {
         return expressions;
     }
 	
-	public static Expression combineWithAnd(List<Expression> expressions) {
+	private static Expression combineWithAnd(List<Expression> expressions) {
         if (expressions == null || expressions.isEmpty()) {
             return null;  // No expressions to combine
         }
@@ -323,9 +420,12 @@ public class QueryPlan {
         for (int i = 1; i < expressions.size(); i++) {
             combinedExpression = new AndExpression(combinedExpression, expressions.get(i));
         }
+        
+        //System.out.println("returning ... "+combinedExpression.toString());
 
         return combinedExpression;
     }
 }
 
-
+	
+	

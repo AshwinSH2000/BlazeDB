@@ -36,6 +36,11 @@ public class ScanOperator extends Operator {
 		openFile();
 	}
 	
+	
+	public String getTableName() {
+		return tableName;
+	}
+	
 	public List<String> getSchema(){
 		return this.schema;
 	}

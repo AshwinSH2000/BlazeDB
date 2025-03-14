@@ -27,4 +27,6 @@ public abstract class Operator {
      * @return A hashmap with attributes as keys and its integer position in the schema
      */
 	protected abstract Map<String, Integer> getAttributeHashIndex();
+
+	protected abstract String getTableName();
 }

@@ -179,6 +179,7 @@ public class EvaluateSelection extends ExpressionDeParser{
             currentValue = tuple.get(attributeHashIndex.get(columnName)).toString();
             System.out.println("The current column value is ASHWINSH MAN "+currentValue);
         }
+        
     }
 
     @Override

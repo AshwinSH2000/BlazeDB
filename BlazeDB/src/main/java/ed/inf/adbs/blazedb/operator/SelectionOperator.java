@@ -74,4 +74,12 @@ public class SelectionOperator extends Operator{
 		return null;
 	}
 
+
+
+	@Override
+	protected String getTableName() {
+		// TODO Auto-generated method stub
+		return null;
+	}
+
 }

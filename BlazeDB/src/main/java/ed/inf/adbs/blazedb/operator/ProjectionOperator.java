@@ -92,5 +92,11 @@ public class ProjectionOperator extends Operator {
 		// TODO Auto-generated method stub
 		return null;
 	}
+
+	@Override
+	protected String getTableName() {
+		// TODO Auto-generated method stub
+		return null;
+	}
 	
 }
