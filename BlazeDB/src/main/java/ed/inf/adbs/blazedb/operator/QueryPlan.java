@@ -74,7 +74,7 @@ public class QueryPlan {
 		if(JOIN!=null) {
 			Operator leftChild = new ScanOperator(FROM.toString());
 			Map<String, Integer> attributeHashIndex_lChild = leftChild.getAttributeHashIndex();
-			
+			String leftTableName = FROM.toString();
 			
 			
 			//Expression exp = null;
@@ -90,7 +90,7 @@ public class QueryPlan {
 			{
 				//System.out.println("Since there is no where clause in this sql query, i will not include the below block of statemets");
 				
-				List<Expression> listTableOneClause=conditionForTable(listExp, FROM.toString());
+				List<Expression> listTableOneClause=conditionForTable(listExp, leftTableName);
 				if(!listTableOneClause.isEmpty()) {
 					System.out.println("hi hello namaste.............found a where clause for table..........." + listTableOneClause.toString());
 					Expression tableOneClause = combineWithAnd(listTableOneClause);
@@ -116,11 +116,13 @@ public class QueryPlan {
 				//maybe create a List of Joins again to have multiple tables on the fly
 				
 				
-
+				//Map<String, Integer> joinedTableAttributes = leftChild.getAttributeHashIndex();
+				
 				Operator rightChild = new ScanOperator(join.getRightItem().toString());
 				Map<String, Integer> attributeHashIndex_rChild = rightChild.getAttributeHashIndex();
 				
 				if(!(WHERE==null)) {
+					
 					List<Expression> listTableTwoClause=conditionForTable(listExp, join.toString());
 					System.out.println("I am printing the value of temp2 wen there is no hwere claise: "+listTableTwoClause.toString());
 					if(!listTableTwoClause.isEmpty())
@@ -138,7 +140,7 @@ public class QueryPlan {
 				//tables and the join
 				
 				if(!(WHERE==null)) {
-					List<Expression> listTablesJoinClause = conditionsForTwoTables(listExp,FROM.toString(),join.toString());
+					List<Expression> listTablesJoinClause = conditionsForTwoTables(listExp,leftTableName,join.toString());
 					if(!listTablesJoinClause.isEmpty()) {
 						
 						Expression tablesJoinClause =  combineWithAnd(listTablesJoinClause);
@@ -148,14 +150,32 @@ public class QueryPlan {
 					}
 				
 					else {
-						System.out.println("Joining the two tables with cross product because of no where join clause present. #################### ");
+						//System.out.println("Joining the two tables with cross product because of no where join clause present. #################### ");
 						leftChild = new JoinOperator(leftChild, rightChild);
 					}
 				}	
 				else {
-					System.out.println("Joining the two tables with cross product because of no where join clause present. #################### ");
+					//System.out.println("Joining the two tables with cross product because of no where join clause present. #################### ");
 					leftChild = new JoinOperator(leftChild, rightChild);
 				}
+				
+				int offset=attributeHashIndex_lChild.size();
+				
+				System.out.println("before updation lahi is "+attributeHashIndex_lChild.toString());
+				System.out.println("before updation rahi is "+attributeHashIndex_rChild.toString());
+
+				//this is to ensure that for any subsequent joins, the updated attHashIndex is sent
+				for (Map.Entry<String, Integer> entry : attributeHashIndex_rChild.entrySet()) {
+				    //String newKey = join.getRightItem().toString() + "." + entry.getKey(); // Prefix with table name
+					if(!attributeHashIndex_lChild.containsKey(entry.getKey()))
+						attributeHashIndex_lChild.put(entry.getKey(), entry.getValue() + offset);
+				}
+				leftTableName = leftTableName.concat(" join "+join.toString());
+				
+				
+				System.out.println("after updation lahi is "+attributeHashIndex_lChild.toString());
+				System.out.println("after updation rahi is "+attributeHashIndex_rChild.toString());
+
 				//seems like the queries consist of only simpleJoin (mostly) and InnerJoin. sp going ahead with them for timebeing. 
 //				System.out.println("displayng the rightitem: "+join.getRightItem().toString());
 //				System.out.println("displaying the isjoin iscross: "+join.isCross() );
@@ -181,7 +201,7 @@ public class QueryPlan {
 				//exp = join.getOnExpression();
 				
 
-			}
+			} //join loop ends
 			
 			//initially I added an if clause for if(WHERE==null) but realised its not reqd. despite presence/absense of where clause, i need tohave a join operator because JOIN clause is not null
 //			Operator root = new JoinOperator(leftChild, rightChild, exp);
@@ -269,7 +289,41 @@ public class QueryPlan {
 //			System.out.println( e.getLeftExpression(). toString().toLowerCase().contains(tableTwo.toLowerCase())   );
 //			System.out.println( e.getRightExpression().toString().toLowerCase().contains(tableOne.toLowerCase())   );
 			
-			
+
+			if(tableOne.contains("join")) {
+				System.out.println("yess it contains a join ed string class ....yes common ash2");
+				
+				String[] leftTableInJoinClause = e.getLeftExpression().toString().toLowerCase().split("\\."); //index 0 will be the name of the table that we wish to check
+				String[] rightTableInJoinClause = e.getRightExpression().toString().toLowerCase().split("\\.");
+				
+				if (   (tableOne.toLowerCase().contains(leftTableInJoinClause[0].toLowerCase()) 
+					    &&
+				       tableTwo.toLowerCase().contains(rightTableInJoinClause[0].toLowerCase()))   
+					   ||
+					   (tableOne.toLowerCase().contains(rightTableInJoinClause[0].toLowerCase()) 
+					    &&
+						tableTwo.toLowerCase().contains(leftTableInJoinClause[0].toLowerCase())   )
+					)
+				{
+					if((tableOne.toLowerCase().contains(leftTableInJoinClause[0].toLowerCase()) 
+					    &&
+				       tableTwo.toLowerCase().contains(rightTableInJoinClause[0].toLowerCase())))
+					{
+						returnClause.add(e);
+					}
+					else if((tableOne.toLowerCase().contains(rightTableInJoinClause[0].toLowerCase()) 
+						    &&
+							tableTwo.toLowerCase().contains(leftTableInJoinClause[0].toLowerCase())   ))
+					{
+						System.out.println("Reordering clause 1");
+						returnClause.add(reorderClause(e));
+					}
+				}
+				
+				
+			}
+			else {
+
 			if
 			(
 				(e.getLeftExpression().toString().toLowerCase().contains(tableOne.toLowerCase())
@@ -292,10 +346,14 @@ public class QueryPlan {
 						&& e.getRightExpression().toString().toLowerCase().contains(tableOne.toLowerCase()) ) {
 					//split the clause. reorder it and join it
 					
-					
+					System.out.println("Reordering clause 2");
 					returnClause.add(reorderClause(e));
 				}
 			}
+			
+			}
+			
+			
 		}
 		
 		return returnClause;

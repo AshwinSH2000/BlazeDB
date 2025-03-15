@@ -27,6 +27,7 @@ public class ScanOperator extends Operator {
 
 		int index=0;
 		for(String x:  this.schema) {
+			//attributeHashIndex.put(tableName+"."+x, index++);
 			attributeHashIndex.put(x, index++);
 		}
 		
