@@ -1,1 +1,1 @@
-SELECT * FROM Course, Enrolled WHERE Course.E >= Enrolled.E AND Course.E > 103;
+SELECT * FROM Student, Enrolled, Course  WHERE Student.A = Enrolled.A AND Course.E = Enrolled.E;

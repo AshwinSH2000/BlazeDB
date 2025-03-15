@@ -133,11 +133,7 @@ public class QueryPlan {
 					}
 				}
 				
-//				if (WHERE != null && temp2!=null) {
-//				{    System.out.println("Applying SelectionOperator for " + join.getRightItem().toString());
-//	                rightChild = new SelectionOperator(rightChild, WHERE, attributeHashIndex_rChild);
-//	            }
-				
+
 				//need to refine this sentence. In the first itr, its ok to have FROM and join. but in all subsequent itrs, you need pass joined
 				//tables and the join
 				
@@ -295,6 +291,8 @@ public class QueryPlan {
 				else if(  e.getLeftExpression().toString().toLowerCase().contains(tableTwo.toLowerCase())
 						&& e.getRightExpression().toString().toLowerCase().contains(tableOne.toLowerCase()) ) {
 					//split the clause. reorder it and join it
+					
+					
 					returnClause.add(reorderClause(e));
 				}
 			}
@@ -306,6 +304,7 @@ public class QueryPlan {
 	private static ComparisonOperator reorderClause(ComparisonOperator e) {
 		ComparisonOperator reversedClause = null;
 		
+		System.out.println("The original vlause received = "+e.toString());
 		Expression leftExp = e.getLeftExpression();
 		Expression rightExp = e.getRightExpression();
 		ComparisonOperator op = null;
@@ -334,6 +333,7 @@ public class QueryPlan {
 		reversedClause = op;
 		
 		System.out.println("Changing the order of the join condition as it was reversed before.. basically providing commutativity");
+		System.out.println("The reordered clause is = "+op.toString());
 		return reversedClause;
 	}
 	

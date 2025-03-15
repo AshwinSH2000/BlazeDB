@@ -70,7 +70,13 @@ public class JoinOperator extends Operator{
 				
 				
 				if(joinExpression==null) {
+					
 					Tuple newlyJoinedTuple = concatenateTuples(leftTuple, rightTuple);
+					System.out.println("Left Tuple: ................. "+leftTuple.toString());
+					System.out.println("Right Tuple: ................. "+rightTuple.toString());
+
+					System.out.println("Concatenated Tuple: ................. "+newlyJoinedTuple.toString());
+
 					rightTuple = rightChild.getNextTuple();
 					return newlyJoinedTuple;	
 				}
