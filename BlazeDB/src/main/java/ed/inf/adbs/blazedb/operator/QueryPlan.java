@@ -283,14 +283,58 @@ public class QueryPlan {
 				&& e.getRightExpression().toString().toLowerCase().contains(tableOne.toLowerCase()))
 						
 				
-			)
+			)					
+
 			{
 				System.out.println(".......Found a join condition for the tables: "+tableOne+" and "+tableTwo);
-				returnClause.add(e);
+				if(   e.getLeftExpression().toString().toLowerCase().contains(tableOne.toLowerCase())
+						&& e.getRightExpression().toString().toLowerCase().contains(tableTwo.toLowerCase())    ) 
+				{
+					returnClause.add(e);
+				}
+				else if(  e.getLeftExpression().toString().toLowerCase().contains(tableTwo.toLowerCase())
+						&& e.getRightExpression().toString().toLowerCase().contains(tableOne.toLowerCase()) ) {
+					//split the clause. reorder it and join it
+					returnClause.add(reorderClause(e));
+				}
 			}
 		}
 		
 		return returnClause;
+	}
+	
+	private static ComparisonOperator reorderClause(ComparisonOperator e) {
+		ComparisonOperator reversedClause = null;
+		
+		Expression leftExp = e.getLeftExpression();
+		Expression rightExp = e.getRightExpression();
+		ComparisonOperator op = null;
+		
+		if(e instanceof GreaterThan) {
+			op = new MinorThan();	
+		}
+		if(e instanceof MinorThan) {
+			op = new GreaterThan();
+		}
+		if(e instanceof GreaterThanEquals) {
+			op = new MinorThanEquals();
+		}
+		if(e instanceof MinorThanEquals) {
+			op = new GreaterThanEquals();
+		}
+		if(e instanceof EqualsTo) {
+			op = new EqualsTo();
+		}
+		if(e instanceof NotEqualsTo) {
+			op = new NotEqualsTo();
+		}
+		
+		op.setLeftExpression(rightExp);
+		op.setRightExpression(leftExp);
+		reversedClause = op;
+		
+		System.out.println("Changing the order of the join condition as it was reversed before.. basically providing commutativity");
+		return reversedClause;
 	}
 	
 	private static List<Expression> conditionForTable(List<Expression> listExp, String table) {
