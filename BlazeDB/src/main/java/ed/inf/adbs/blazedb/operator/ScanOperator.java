@@ -21,8 +21,9 @@ public class ScanOperator extends Operator {
 		DatabaseCatalog catalog = DatabaseCatalog.getInstance();
 		
 		this.tableName = tableName;
-		this.filePath = catalog.getInstance().getTableFilePath(tableName);       
-		this.schema = catalog.getInstance().getTableSchema(tableName);			  
+		this.filePath = DatabaseCatalog.getInstance().getTableFilePath(tableName);       
+		this.schema = DatabaseCatalog.getInstance().getTableSchema(tableName);			  
+		
 		this.attributeHashIndex = new HashMap<>();
 
 		int index=0;
@@ -31,6 +32,8 @@ public class ScanOperator extends Operator {
 			attributeHashIndex.put(x, index++);
 		}
 		
+		
+		System.out.println("The attributeHashIndex for "+tableName+ "table is "+attributeHashIndex.toString());
 //		for(String x: this.schema) {
 //			System.out.println("Ashwishshshsh--------"+attributeHashIndex.values());
 //		}

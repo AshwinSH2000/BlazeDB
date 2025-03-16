@@ -71,7 +71,7 @@ public class SelectionOperator extends Operator{
 	@Override
 	protected Map<String, Integer> getAttributeHashIndex() {
 		// TODO Auto-generated method stub
-		return null;
+		return attributeHashIndex;
 	}
 
 
@@ -79,7 +79,7 @@ public class SelectionOperator extends Operator{
 	@Override
 	protected String getTableName() {
 		// TODO Auto-generated method stub
-		return null;
+		return root.getTableName();
 	}
 
 }

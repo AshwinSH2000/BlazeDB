@@ -37,7 +37,6 @@ public class QueryPlan {
 	 * @return - nothing, as of now. but might need to change it to be Operator I think, not sure. 
 	 */
 	
-	@SuppressWarnings("deprecation")
 	public static Operator buildQueryPlan(List<SelectItem<?>> SELECT, Distinct DISTINCT, List<OrderByElement> ORDERBY,
 									  GroupByElement GROUPBY, Expression WHERE, List<Join> JOIN, FromItem FROM) {
 		

@@ -1,1 +1,1 @@
-SELECT * FROM Student, Enrolled, Course  WHERE Student.A = Enrolled.A AND Course.E = Enrolled.E;
+SELECT * FROM Student, Enrolled, Course  WHERE Course.E = Enrolled.E AND Student.A = Enrolled.A;

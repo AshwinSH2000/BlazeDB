@@ -67,7 +67,7 @@ public class BlazeDB {
 		dbc.loadDetails(databaseDir);
 		
 		
-		parsingExample(inputFile, outputFile);
+		parseQuery(inputFile, outputFile);
 
 		//		String x=dbc.getTableFilePath(tableName);
 		//		TableInfo y=dbc.getTableInfo(tableName);
@@ -84,7 +84,7 @@ public class BlazeDB {
 	 * from a file or a string and prints the SELECT and WHERE clauses to screen.
 	 */
 
-	public static void parsingExample(String filename, String outputFile) {
+	public static void parseQuery(String filename, String outputFile) {
 		try {
 			Statement statement = CCJSqlParserUtil.parse(new FileReader(filename));
 			//            Statement statement = CCJSqlParserUtil.parse("SELECT Course.cid, Student.name FROM Course, Student WHERE Student.sid = 3");

@@ -97,7 +97,9 @@ public class JoinOperator extends Operator{
 					String leftCol = splitLeftExpr[1];
 					String rightCol = splitRightExpr[1];
 					
-					if (compareValues(e, leftCol, rightCol)) {
+					
+					
+					if (compareValues(e, leftExpressionString, rightExpressionString)) {
 	                    Tuple newlyJoinedTuple = concatenateTuples(leftTuple, rightTuple);
 	                    rightTuple = rightChild.getNextTuple();
 	                    return newlyJoinedTuple;
@@ -223,8 +225,8 @@ public class JoinOperator extends Operator{
 	}
 	
 	private boolean compareValues(ComparisonOperator operator, String leftCol, String rightCol) {
-		Comparable leftValue = leftTuple.get(leftAttributeHashIndex.get(leftCol));
-		Comparable rightValue = rightTuple.get(rightAttributeHashIndex.get(rightCol));
+		Comparable leftValue = leftTuple.get(leftAttributeHashIndex.get(leftCol.toLowerCase()));
+		Comparable rightValue = rightTuple.get(rightAttributeHashIndex.get(rightCol.toLowerCase()));
 		
 		if (operator instanceof EqualsTo) {
 	        return leftValue.compareTo(rightValue) == 0;
@@ -286,6 +288,7 @@ public class JoinOperator extends Operator{
 	@Override
 	protected String getTableName() {
 		// TODO Auto-generated method stub
+		
 		return null;
 	}
 

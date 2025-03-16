@@ -36,7 +36,7 @@ public class ProjectionOperator extends Operator {
 					Column column = (Column)exp;
 					String tableName = column.getTable().getName();   //column.getTable() != null ? column.getTable().getName() : null;
 					String attributeNames = column.getColumnName();
-					colsToBeProjected.add(attributeNames);
+					colsToBeProjected.add(column.toString().toLowerCase());
 
 					
 					//just a debug statement to check if the tablename and col name is getting split or not. 
@@ -90,13 +90,13 @@ public class ProjectionOperator extends Operator {
 	@Override
 	protected Map<String, Integer> getAttributeHashIndex() {
 		// TODO Auto-generated method stub
-		return null;
+		return attributeHashIndex;
 	}
 
 	@Override
 	protected String getTableName() {
 		// TODO Auto-generated method stub
-		return null;
+		return root.getTableName();
 	}
 	
 }
