@@ -7,6 +7,9 @@ import java.io.IOException;
 import java.util.Arrays;
 import java.util.List;
 
+import javax.sql.rowset.serial.SQLOutputImpl;
+
+
 import net.sf.jsqlparser.expression.Expression;
 import net.sf.jsqlparser.parser.CCJSqlParserUtil;
 import net.sf.jsqlparser.statement.Statement;
@@ -116,6 +119,8 @@ public class BlazeDB {
 				System.out.println("ORDER BY : "+ ORDERBY);
 				System.out.println("FROM : "+ FROM);				 //but this is displaying only one table. rest in getJoin
 				System.out.println("JOIN  : "+JOIN);
+				
+				
 				
 //				Code to test the initialization of databasecatalog				
 //				DatabaseCatalog dbc = DatabaseCatalog.getInstance();

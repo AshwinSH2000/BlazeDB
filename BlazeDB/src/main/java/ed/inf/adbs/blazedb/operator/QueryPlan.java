@@ -66,6 +66,10 @@ public class QueryPlan {
 				root = new ProjectionOperator(root, SELECT, attributeHashIndex);
 			}
 			
+			if(ORDERBY!=null) {
+				System.out.println("Order by detectd. hence sorting the columns now");
+				root = new SortOperator(root, ORDERBY, attributeHashIndex);
+			}
 			return root;
 			
 		}
