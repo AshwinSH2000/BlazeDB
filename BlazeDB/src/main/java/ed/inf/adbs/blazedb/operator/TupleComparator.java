@@ -29,7 +29,11 @@ public class TupleComparator implements Comparator<Tuple> {
             int value1 = tuple1.get(index);
             int value2 = tuple2.get(index);
 
-            return Integer.compare(value1, value2);
+            int comparisonResult = Integer.compare(value1, value2);
+            if (comparisonResult != 0) { // Only return if a difference is found
+                return comparisonResult;
+            }
+            
             
         }
 		

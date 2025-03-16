@@ -224,7 +224,10 @@ public class QueryPlan {
 //				root = new SelectionOperator(root, WHERE,  );
 //			}
 			
-			
+			if(ORDERBY!=null) {
+				System.out.println("Order by detectd. hence sorting the columns now");
+				leftChild = new SortOperator(leftChild, ORDERBY, attributeHashIndex_lChild);
+			}
 			return leftChild;
 			
 		}
