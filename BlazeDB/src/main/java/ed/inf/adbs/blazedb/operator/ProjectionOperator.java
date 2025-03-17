@@ -1,6 +1,7 @@
 package ed.inf.adbs.blazedb.operator;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
@@ -18,15 +19,18 @@ public class ProjectionOperator extends Operator {
 	private List<SelectItem<?>> SELECT;
 	private Map<String, Integer> attributeHashIndex;
 	private List<String> colsToBeProjected;
+	private Map<String, Integer> projectedAttributesHashIndex;
 
 	
 	public ProjectionOperator(Operator root, List<SelectItem<?>> SELECT, Map<String, Integer> attributeHashIndex) {
 		this.root = root;
 		this.SELECT=SELECT;
 		this.attributeHashIndex = attributeHashIndex;
+		this.projectedAttributesHashIndex = new HashMap<>();
 		
 	    colsToBeProjected = new ArrayList<>();
 	    
+	    int index=0;
 		for(SelectItem<?> col : this.SELECT) {
 			
 			if(col instanceof SelectItem) {										//this was SelectExpressionItem ..next row too
@@ -37,7 +41,7 @@ public class ProjectionOperator extends Operator {
 					String tableName = column.getTable().getName();   //column.getTable() != null ? column.getTable().getName() : null;
 					String attributeNames = column.getColumnName();
 					colsToBeProjected.add(column.toString().toLowerCase());
-
+					projectedAttributesHashIndex.put(column.toString().toLowerCase(), index++);
 					
 					//just a debug statement to check if the tablename and col name is getting split or not. 
 		            //System.out.println("table is " + tableName + " and col is " + attributeNames);
@@ -90,7 +94,9 @@ public class ProjectionOperator extends Operator {
 	@Override
 	protected Map<String, Integer> getAttributeHashIndex() {
 		// TODO Auto-generated method stub
-		return attributeHashIndex;
+		//System.out.println("wait....am i even reaching this point????");
+		//System.out.println(projectedAttributesHashIndex.toString());
+		return projectedAttributesHashIndex;
 	}
 
 	@Override

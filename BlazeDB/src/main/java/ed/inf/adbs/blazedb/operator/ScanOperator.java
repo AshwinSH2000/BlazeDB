@@ -20,7 +20,7 @@ public class ScanOperator extends Operator {
 		
 		DatabaseCatalog catalog = DatabaseCatalog.getInstance();
 		
-		this.tableName = tableName;
+		this.tableName = tableName.toLowerCase();
 		this.filePath = DatabaseCatalog.getInstance().getTableFilePath(tableName);       
 		this.schema = DatabaseCatalog.getInstance().getTableSchema(tableName);			  
 		

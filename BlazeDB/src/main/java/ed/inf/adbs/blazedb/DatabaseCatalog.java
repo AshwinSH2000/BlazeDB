@@ -62,7 +62,7 @@ public class DatabaseCatalog {
         		String tablePath = path + "/data/" + tableName + ".csv";
         		
         		//all three parameters are read. now time to load the table metadata into the databaseCatalog
-        		catalogHash.put(tableName, new TableInfo(tableName,tableAttributes,tablePath));
+        		catalogHash.put(tableName.toLowerCase(), new TableInfo(tableName,tableAttributes,tablePath));
         	}
         	
         } catch (FileNotFoundException e) {
@@ -87,23 +87,23 @@ public class DatabaseCatalog {
 	 * @param name the name of the table whose information we want to access
 	 */
 	public TableInfo getTableInfo(String name) {
-		return catalogHash.get(name);
+		return catalogHash.get(name.toLowerCase());
 	}
 	
 	/*
 	 * @param name the name of the table whose schema we want to access
 	 */
 	public List<String> getTableSchema(String name){
-		if (catalogHash.containsKey(name)) {
-			return catalogHash.get(name).attributes;
+		if (catalogHash.containsKey(name.toLowerCase())) {
+			return catalogHash.get(name.toLowerCase()).attributes;
 		}
 		else
 			return null;
 	}
 	
 	public String getTableFilePath(String name) {
-		if(catalogHash.containsKey(name)) {
-			return catalogHash.get(name).path;
+		if(catalogHash.containsKey(name.toLowerCase())) {
+			return catalogHash.get(name.toLowerCase()).path;
 		}
 		else
 			return null;

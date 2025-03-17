@@ -61,15 +61,22 @@ public class QueryPlan {
 				System.out.println("Going to wrap selection operator");
 				root = new SelectionOperator(root, WHERE, attributeHashIndex);
 			}
+			
+			// sorting can be done here as well but it leads to larger tuples being compared which can reduce the speed
 			if(!SELECT.toString().contains("[*]")) {
 				System.out.println("Detected projection criteria...so root is projectionoperator");
 				root = new ProjectionOperator(root, SELECT, attributeHashIndex);
+				//pulling the new attribute hash index containing the projected columns only
+				attributeHashIndex = root.getAttributeHashIndex();
 			}
 			
 			if(ORDERBY!=null) {
 				System.out.println("Order by detectd. hence sorting the columns now");
-				root = new SortOperator(root, ORDERBY, attributeHashIndex);
+				root = new SortOperator(root, ORDERBY, attributeHashIndex);	
 			}
+			System.out.println("This is just before returning the main root");
+			System.out.println(attributeHashIndex.toString());
+
 			return root;
 			
 		}
@@ -223,6 +230,19 @@ public class QueryPlan {
 //				}
 //				root = new SelectionOperator(root, WHERE,  );
 //			}
+			
+			
+			
+			
+			// sorting can be done here as well but it leads to larger tuples being compared which can reduce the speed
+			if(!SELECT.toString().contains("[*]")) {
+				System.out.println("Detected projection criteria...so root is projectionoperator");
+				leftChild = new ProjectionOperator(leftChild, SELECT, attributeHashIndex_lChild);
+				//pulling the new attribute hash index containing the projected columns only
+				attributeHashIndex_lChild = leftChild.getAttributeHashIndex();
+			}
+			
+			
 			
 			if(ORDERBY!=null) {
 				System.out.println("Order by detectd. hence sorting the columns now");
