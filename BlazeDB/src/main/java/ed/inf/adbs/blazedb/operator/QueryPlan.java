@@ -70,6 +70,11 @@ public class QueryPlan {
 				attributeHashIndex = root.getAttributeHashIndex();
 			}
 			
+			if(DISTINCT!=null) {
+				System.out.println("performing duplicate elimination....dishkyuun dishkyuunn...");
+				root = new DuplicateEliminationOperator(root);
+			}
+			
 			if(ORDERBY!=null) {
 				System.out.println("Order by detectd. hence sorting the columns now");
 				root = new SortOperator(root, ORDERBY, attributeHashIndex);	
@@ -242,7 +247,10 @@ public class QueryPlan {
 				attributeHashIndex_lChild = leftChild.getAttributeHashIndex();
 			}
 			
-			
+			if(DISTINCT!=null) {
+				System.out.println("performing duplicate elimination....dishkyuun dishkyuunn...");
+				leftChild = new DuplicateEliminationOperator(leftChild);
+			}
 			
 			if(ORDERBY!=null) {
 				System.out.println("Order by detectd. hence sorting the columns now");

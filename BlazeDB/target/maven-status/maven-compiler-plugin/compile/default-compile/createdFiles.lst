@@ -6,6 +6,7 @@ ed/inf/adbs/blazedb/operator/ProjectionOperator.class
 ed/inf/adbs/blazedb/operator/SelectionOperator.class
 ed/inf/adbs/blazedb/operator/SortOperator.class
 ed/inf/adbs/blazedb/operator/JoinOperator.class
+ed/inf/adbs/blazedb/operator/DuplicateEliminationOperator.class
 ed/inf/adbs/blazedb/Tuple.class
 ed/inf/adbs/blazedb/operator/TupleComparator.class
 ed/inf/adbs/blazedb/TableInfo.class

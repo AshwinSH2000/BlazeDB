@@ -1,7 +1,9 @@
 package ed.inf.adbs.blazedb;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
+import java.util.Objects;
 
 /**
  * The Tuple class represents a row of data.
@@ -48,6 +50,19 @@ public class Tuple {
 	
 	public List<Integer> getTupleValues() {
 		return x;
+	}
+	
+	public int hashCode() {
+		return Objects.hash(x);
+	}
+	
+	public boolean equals(Object passedObject) {
+		if (this == passedObject) 
+			return true;
+		if(passedObject == null || this.getClass() != passedObject.getClass() )
+			return false;
+		Tuple tuple = (Tuple) passedObject;
+		return Objects.equals(x, tuple.getTupleValues());
 	}
 		
 }

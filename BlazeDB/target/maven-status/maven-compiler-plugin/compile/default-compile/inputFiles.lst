@@ -8,6 +8,7 @@
 /Users/ashwinsh/Documents/Edinburgh/ADBS/cw/BlazeDB/src/main/java/ed/inf/adbs/blazedb/operator/SortOperator.java
 /Users/ashwinsh/Documents/Edinburgh/ADBS/cw/BlazeDB/src/main/java/ed/inf/adbs/blazedb/operator/QueryPlan.java
 /Users/ashwinsh/Documents/Edinburgh/ADBS/cw/BlazeDB/src/main/java/ed/inf/adbs/blazedb/operator/TupleComparator.java
+/Users/ashwinsh/Documents/Edinburgh/ADBS/cw/BlazeDB/src/main/java/ed/inf/adbs/blazedb/operator/DuplicateEliminationOperator.java
 /Users/ashwinsh/Documents/Edinburgh/ADBS/cw/BlazeDB/src/main/java/ed/inf/adbs/blazedb/operator/JoinOperator.java
 /Users/ashwinsh/Documents/Edinburgh/ADBS/cw/BlazeDB/src/main/java/ed/inf/adbs/blazedb/DatabaseCatalog.java
 /Users/ashwinsh/Documents/Edinburgh/ADBS/cw/BlazeDB/src/main/java/ed/inf/adbs/blazedb/BlazeDB.java
