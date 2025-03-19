@@ -11,6 +11,7 @@ import javax.sql.rowset.serial.SQLOutputImpl;
 
 
 import net.sf.jsqlparser.expression.Expression;
+import net.sf.jsqlparser.expression.operators.relational.ExpressionList;
 import net.sf.jsqlparser.parser.CCJSqlParserUtil;
 import net.sf.jsqlparser.statement.Statement;
 import net.sf.jsqlparser.statement.select.Distinct;
@@ -97,7 +98,8 @@ public class BlazeDB {
 				List<SelectItem<?>> SELECT;
 				Distinct DISTINCT;	
 				List<OrderByElement> ORDERBY;
-				GroupByElement GROUPBY;
+				ExpressionList GROUPBY;
+//				ExpressionList GROUPBY2;
 				Expression WHERE;
 				List<Join> JOIN;
 				FromItem FROM;
@@ -107,7 +109,11 @@ public class BlazeDB {
 				FROM=select.getPlainSelect().getFromItem();
 				JOIN=select.getPlainSelect().getJoins();
 				WHERE=select.getPlainSelect().getWhere();
-				GROUPBY=select.getPlainSelect().getGroupBy();
+				if(select.getPlainSelect().getGroupBy()==null) 
+					GROUPBY = null;
+				else
+					GROUPBY=select.getPlainSelect().getGroupBy().getGroupByExpressionList();
+//				GROUPBY2 = select.getPlainSelect().getGroupBy().getGroupByExpressionList();
 				ORDERBY=select.getPlainSelect().getOrderByElements();
 				DISTINCT=select.getPlainSelect().getDistinct();
 
@@ -116,6 +122,10 @@ public class BlazeDB {
 				System.out.println("DISTINCT : "+ DISTINCT);
 				System.out.println("WHERE : " + WHERE);
 				System.out.println("GROUP BY : " + GROUPBY);
+//				System.out.println("GROUP BY EXPRESSION LIST : " + GROUPBY2);
+//				for(Object exp : GROUPBY2) {
+//					System.out.println(exp.toString());
+//				}
 				System.out.println("ORDER BY : "+ ORDERBY);
 				System.out.println("FROM : "+ FROM);				 //but this is displaying only one table. rest in getJoin
 				System.out.println("JOIN  : "+JOIN);

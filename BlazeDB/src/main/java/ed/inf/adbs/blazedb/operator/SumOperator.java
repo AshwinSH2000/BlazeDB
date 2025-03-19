@@ -1,6 +1,7 @@
 package ed.inf.adbs.blazedb.operator;
 
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 
@@ -15,15 +16,16 @@ import net.sf.jsqlparser.statement.select.SelectItem;
 public class SumOperator extends Operator{
 	
 	private Operator root;
-	private GroupByElement groupByClause;
+	private ExpressionList groupByClause;
 	private List<SelectItem<?>> selectClause;
 	private Map<String, Integer> attributeHashIndex;
 	private List<String> colsToBeProjected;
 	private int index;
 	private List<Tuple> bufferTuples;
 	private List<Tuple> outputTuples;
+	private HashSet<Tuple> uniqueTuples;
 	
-	public SumOperator(Operator root, GroupByElement groupByClause, List<SelectItem<?>> selectClause, Map<String, Integer> attributesHashIndex) {
+	public SumOperator(Operator root, ExpressionList groupByClause, List<SelectItem<?>> selectClause, Map<String, Integer> attributesHashIndex) {
 		this.root = root;
 		this.groupByClause = groupByClause;
 		this.selectClause = selectClause;
@@ -31,6 +33,7 @@ public class SumOperator extends Operator{
 		this.index = 0;
 		this.bufferTuples = new ArrayList<>();
 		this.outputTuples = new ArrayList<>();
+		this.uniqueTuples = new HashSet<Tuple>();
 		
 		groupTheTuples();
 	}
@@ -124,7 +127,19 @@ public class SumOperator extends Operator{
 		
 		if( !selectClause.toString().toLowerCase().contains("sum") && groupByClause!=null ) {
 			//need to just group by. here need to check if the condition in select clause matches the condition in group by clause.
-			;
+			//the clause present in select needs to be present in group by too... assuming this and proceeding. 
+			for (Tuple scannedTuple : bufferTuples) {
+				Tuple tempTuple = new Tuple();
+				for(Object groupByObj : groupByClause ) {
+					tempTuple.add(   scannedTuple.get(   attributeHashIndex.get(   groupByObj.toString().toLowerCase()  )    )    );
+				}
+				uniqueTuples.add(tempTuple);
+			}
+			
+			//copy uniqueTuples to outputTuples
+			for (Tuple temp : uniqueTuples) {
+				outputTuples.add(temp);
+			}
 		}
 		
 		if(selectClause.toString().toLowerCase().contains("sum") && groupByClause!=null) {

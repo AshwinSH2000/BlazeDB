@@ -13,6 +13,7 @@ import net.sf.jsqlparser.expression.operators.conditional.AndExpression;
 import net.sf.jsqlparser.expression.operators.conditional.OrExpression;
 import net.sf.jsqlparser.expression.operators.relational.ComparisonOperator;
 import net.sf.jsqlparser.expression.operators.relational.EqualsTo;
+import net.sf.jsqlparser.expression.operators.relational.ExpressionList;
 import net.sf.jsqlparser.expression.operators.relational.GreaterThan;
 import net.sf.jsqlparser.expression.operators.relational.GreaterThanEquals;
 import net.sf.jsqlparser.expression.operators.relational.MinorThan;
@@ -38,7 +39,7 @@ public class QueryPlan {
 	 */
 	
 	public static Operator buildQueryPlan(List<SelectItem<?>> SELECT, Distinct DISTINCT, List<OrderByElement> ORDERBY,
-									  GroupByElement GROUPBY, Expression WHERE, List<Join> JOIN, FromItem FROM) {
+									  ExpressionList GROUPBY, Expression WHERE, List<Join> JOIN, FromItem FROM) {
 		
 		DatabaseCatalog catalog = DatabaseCatalog.getInstance();
 		

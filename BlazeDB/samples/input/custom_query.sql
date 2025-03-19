@@ -1,1 +1,1 @@
-SELECT SUM(Student.A * Student.A) FROM Student;
+SELECT SUM(3), SUM(2*2*2), SUM(Course.G*Course.g) FROM Course;

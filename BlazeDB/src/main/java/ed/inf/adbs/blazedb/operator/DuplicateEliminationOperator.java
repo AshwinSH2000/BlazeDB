@@ -26,8 +26,8 @@ public class DuplicateEliminationOperator extends Operator{
 				uniqueTuples.add(currentTuple);
 				System.out.println(currentTuple.toString()+" is a unique tuple");
 				System.out.println(currentTuple.hashCode()+"\n");
-				for(Tuple xyz:uniqueTuples)
-					System.out.println(xyz.hashCode());
+				for(Tuple individualTuple:uniqueTuples)
+					System.out.println(individualTuple.hashCode());
 				return currentTuple;
 			}
 			else {
