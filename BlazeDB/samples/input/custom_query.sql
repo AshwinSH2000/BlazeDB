@@ -1,1 +1,1 @@
-SELECT SUM(2), SUM(3*3) FROM Student;
+SELECT SUM(Student.A * Student.A) FROM Student;

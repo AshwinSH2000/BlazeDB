@@ -59,22 +59,59 @@ public class SumOperator extends Operator{
                         System.out.println("printiing outside the loop "+parameters.toString());
                         
                         if(!parameters.toString().contains("*")) {
-                        	//single number inside the brackets
-                        	evalSumExpr = Integer.parseInt(parameters.toString());
+                        	//doesnt contain * that means its either sum(number) or sum(column)
+                        	
+                        	//if it contains column
+                        	if(attributeHashIndex.containsKey(parameters.toString().toLowerCase())) {
+                        		for( Tuple tempTuple : bufferTuples) {
+                        			sum += tempTuple.get(attributeHashIndex.get(parameters.toString().toLowerCase()));
+                        		}
+                        	}
+                        	
+                        	//if it contains a single number inside brackets
+                        	else {
+                        		evalSumExpr = Integer.parseInt(parameters.toString());
+                                sum = bufferTuples.size()*evalSumExpr;
+
+                        	}
+                        	
                         }
                         else {
+                        	//in this case we check for either sum(number * number [* number ...]) or sum(column * column [* column...])
+                        	int ans=1, number=0;
+                        	sum=0;
                         	evalSumExpr=1;
                         	String[] numbers = parameters.toString().split("\\*");
-                        	for(String individualNums : numbers) {
-                        		individualNums = individualNums.strip();
-                        		evalSumExpr = evalSumExpr * Integer.parseInt(individualNums);
-                        	}	
+                        	
+                        	for ( Tuple currentTuple : bufferTuples) {
+                        		ans=1;
+                        		for(String individualNums : numbers) {
+                            		individualNums = individualNums.strip();
+                            		
+                            		//if it is a column reference
+                            		if(attributeHashIndex.containsKey(individualNums.toLowerCase())) {
+                            			number = currentTuple.get(attributeHashIndex.get(individualNums.toLowerCase()));
+                            		}
+                            		else {
+                            			number = Integer.parseInt(individualNums);
+                            		}
+                            		ans = ans * number;
+                            		
+                            		
+                            		//if it is a number
+//                            		else {
+//                                		evalSumExpr = evalSumExpr * Integer.parseInt(individualNums);
+//                            		}
+                            	}
+                        		sum = sum + ans;
+                        	}
+                        		
                         }
-                        System.out.println("printing the result = "+evalSumExpr);
+                        System.out.println("printing the result = "+sum);
                         
                         //calculate the sum based on the number of tuples in bufferTuple
-                        sum = bufferTuples.size()*evalSumExpr;
 					}
+					
 				}
 				//illi tuple ge add maadbodu
 				tupleToReturn.add(sum);
