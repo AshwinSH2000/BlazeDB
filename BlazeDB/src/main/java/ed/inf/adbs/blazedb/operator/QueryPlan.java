@@ -64,10 +64,21 @@ public class QueryPlan {
 			
 			// sorting can be done here as well but it leads to larger tuples being compared which can reduce the speed
 			if(!SELECT.toString().contains("[*]")) {
-				System.out.println("Detected projection criteria...so root is projectionoperator");
-				root = new ProjectionOperator(root, SELECT, attributeHashIndex);
-				//pulling the new attribute hash index containing the projected columns only
-				attributeHashIndex = root.getAttributeHashIndex();
+				
+				
+				if(!SELECT.toString().toLowerCase().contains("sum") && GROUPBY == null) {
+					System.out.println("Detected projection criteria...so root is projectionoperator");
+					root = new ProjectionOperator(root, SELECT, attributeHashIndex);
+					//pulling the new attribute hash index containing the projected columns only
+					attributeHashIndex = root.getAttributeHashIndex();
+				}
+				
+				else
+				{
+					System.out.println("Inside the if block to check for projection but this one eithrt has sum, group by or both");
+					root = new SumOperator(root, GROUPBY, SELECT, attributeHashIndex);
+				}
+				
 			}
 			
 			if(DISTINCT!=null) {

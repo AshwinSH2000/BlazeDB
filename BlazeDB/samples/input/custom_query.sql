@@ -1,1 +1,1 @@
-SELECT DISTINCT Student.B, Enrolled.A FROM Student, Enrolled ORDER BY Student.B, Enrolled.A;
+SELECT SUM(2), SUM(3*3) FROM Student;

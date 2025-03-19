@@ -1,0 +1,128 @@
+package ed.inf.adbs.blazedb.operator;
+
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Map;
+
+import ed.inf.adbs.blazedb.Tuple;
+import net.sf.jsqlparser.expression.Expression;
+import net.sf.jsqlparser.expression.Function;
+import net.sf.jsqlparser.expression.operators.relational.ExpressionList;
+import net.sf.jsqlparser.statement.select.GroupByElement;
+import net.sf.jsqlparser.statement.select.SelectItem;
+
+
+public class SumOperator extends Operator{
+	
+	private Operator root;
+	private GroupByElement groupByClause;
+	private List<SelectItem<?>> selectClause;
+	private Map<String, Integer> attributeHashIndex;
+	private List<String> colsToBeProjected;
+	private int index;
+	private List<Tuple> bufferTuples;
+	private List<Tuple> outputTuples;
+	
+	public SumOperator(Operator root, GroupByElement groupByClause, List<SelectItem<?>> selectClause, Map<String, Integer> attributesHashIndex) {
+		this.root = root;
+		this.groupByClause = groupByClause;
+		this.selectClause = selectClause;
+		this.attributeHashIndex = attributesHashIndex;
+		this.index = 0;
+		this.bufferTuples = new ArrayList<>();
+		this.outputTuples = new ArrayList<>();
+		
+		groupTheTuples();
+	}
+	
+	private void groupTheTuples() {
+		Tuple tuple;
+		while(     (tuple=root.getNextTuple())!=null    ) {
+			bufferTuples.add(tuple);
+		}
+		
+		if(selectClause.toString().toLowerCase().contains("sum") && groupByClause == null) {
+			
+			Tuple tupleToReturn = new Tuple();
+			//need to set just a tuple
+			//since group by clause is null, i can assume that there is no other selectitem apart from sum(s)
+			int sum=0, evalSumExpr=1;
+			
+			for(SelectItem<?> sumItem : selectClause) {
+				evalSumExpr=1;
+				if(sumItem instanceof SelectItem) {										//this was SelectExpressionItem ..next row too
+					Expression exp = ((SelectItem)sumItem).getExpression();
+					if (exp instanceof Function) {
+                        Function function = (Function) exp;
+                        
+                        Expression parameters = function.getParameters();
+                        System.out.println("printiing outside the loop "+parameters.toString());
+                        
+                        if(!parameters.toString().contains("*")) {
+                        	//single number inside the brackets
+                        	evalSumExpr = Integer.parseInt(parameters.toString());
+                        }
+                        else {
+                        	evalSumExpr=1;
+                        	String[] numbers = parameters.toString().split("\\*");
+                        	for(String individualNums : numbers) {
+                        		individualNums = individualNums.strip();
+                        		evalSumExpr = evalSumExpr * Integer.parseInt(individualNums);
+                        	}	
+                        }
+                        System.out.println("printing the result = "+evalSumExpr);
+                        
+                        //calculate the sum based on the number of tuples in bufferTuple
+                        sum = bufferTuples.size()*evalSumExpr;
+					}
+				}
+				//illi tuple ge add maadbodu
+				tupleToReturn.add(sum);
+			}
+			outputTuples.add(tupleToReturn);
+			System.out.println("the output of the expression is "+outputTuples.toString());
+			
+		}
+		
+		
+		if( !selectClause.toString().toLowerCase().contains("sum") && groupByClause!=null ) {
+			//need to just group by. here need to check if the condition in select clause matches the condition in group by clause.
+			;
+		}
+		
+		if(selectClause.toString().toLowerCase().contains("sum") && groupByClause!=null) {
+		;
+			//mix of both. first need to group by and then apply the sum. 
+		}
+	
+		
+	}
+	
+	@Override
+	public Tuple getNextTuple() {
+		
+		if (index < outputTuples.size()) {
+            return outputTuples.get(index++);
+        }
+        return null; //no more tuples to return..hence returning null;
+	}
+
+	@Override
+	public void reset() {
+		// TODO Auto-generated method stub
+		
+	}
+
+	@Override
+	protected Map<String, Integer> getAttributeHashIndex() {
+		// TODO Auto-generated method stub
+		return null;
+	}
+
+	@Override
+	protected String getTableName() {
+		// TODO Auto-generated method stub
+		return null;
+	}
+
+}

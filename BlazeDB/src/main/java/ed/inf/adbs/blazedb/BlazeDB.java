@@ -120,7 +120,7 @@ public class BlazeDB {
 				System.out.println("FROM : "+ FROM);				 //but this is displaying only one table. rest in getJoin
 				System.out.println("JOIN  : "+JOIN);
 				
-				
+
 				
 //				Code to test the initialization of databasecatalog				
 //				DatabaseCatalog dbc = DatabaseCatalog.getInstance();

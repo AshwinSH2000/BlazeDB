@@ -4,6 +4,7 @@ ed/inf/adbs/blazedb/BlazeDB.class
 ed/inf/adbs/blazedb/operator/Operator.class
 ed/inf/adbs/blazedb/operator/ProjectionOperator.class
 ed/inf/adbs/blazedb/operator/SelectionOperator.class
+ed/inf/adbs/blazedb/operator/SumOperator.class
 ed/inf/adbs/blazedb/operator/SortOperator.class
 ed/inf/adbs/blazedb/operator/JoinOperator.class
 ed/inf/adbs/blazedb/operator/DuplicateEliminationOperator.class
