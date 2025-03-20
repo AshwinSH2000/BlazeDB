@@ -543,7 +543,8 @@ public class QueryPlan {
 			return true;
 			
 		}
-		catch(Exception e) {
+		catch(NumberFormatException e) {
+			System.out.println("QUERYPLAN: NFException");
 			return false;
 		}
 	}

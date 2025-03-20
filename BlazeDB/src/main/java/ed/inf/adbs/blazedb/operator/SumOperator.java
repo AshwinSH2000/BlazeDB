@@ -46,6 +46,11 @@ public class SumOperator extends Operator{
 			bufferTuples.add(tuple);
 		}
 		
+		//if there are no tuples obtained from the child operator, return immediately and avoid all unnecessary computations below
+		if(bufferTuples.size()==0){
+			return;
+		}
+		
 		if(selectClause.toString().toLowerCase().contains("sum") && groupByClause == null) {
 			
 			Tuple tupleToReturn = new Tuple();

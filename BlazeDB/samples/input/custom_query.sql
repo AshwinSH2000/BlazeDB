@@ -1,1 +1,1 @@
-SELECT * FROM Student, Enrolled WHERE 42 = 43;
+SELECT * FROM Course Order By Course.E;

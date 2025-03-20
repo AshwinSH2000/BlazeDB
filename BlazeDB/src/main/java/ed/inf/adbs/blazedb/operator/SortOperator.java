@@ -23,7 +23,10 @@ public class SortOperator extends Operator{
 			sortBuffer.add(tuple);
 		}
 		
-		
+		//if no tuples are pulled from the child operator, avoid unnecessary computations and return immediately
+		if(sortBuffer.size()==0) {
+			return;
+		}
 		//what exactly is the code to sort..find out bro
 		sortBuffer.sort(new TupleComparator(orderByElements, attributeHashIndex));
 	}
