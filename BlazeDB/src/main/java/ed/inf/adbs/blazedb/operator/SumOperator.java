@@ -1,6 +1,7 @@
 package ed.inf.adbs.blazedb.operator;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
@@ -19,11 +20,11 @@ public class SumOperator extends Operator{
 	private ExpressionList groupByClause;
 	private List<SelectItem<?>> selectClause;
 	private Map<String, Integer> attributeHashIndex;
-	private List<String> colsToBeProjected;
+	private Map<String, Integer> projectedAttributeHashIndex;
 	private int index;
 	private List<Tuple> bufferTuples;
 	private List<Tuple> outputTuples;
-	private HashSet<Tuple> uniqueTuples;
+	
 	
 	public SumOperator(Operator root, ExpressionList groupByClause, List<SelectItem<?>> selectClause, Map<String, Integer> attributesHashIndex) {
 		this.root = root;
@@ -33,7 +34,8 @@ public class SumOperator extends Operator{
 		this.index = 0;
 		this.bufferTuples = new ArrayList<>();
 		this.outputTuples = new ArrayList<>();
-		this.uniqueTuples = new HashSet<Tuple>();
+		this.projectedAttributeHashIndex = new HashMap<>();
+		
 		
 		groupTheTuples();
 	}
@@ -49,7 +51,7 @@ public class SumOperator extends Operator{
 			Tuple tupleToReturn = new Tuple();
 			//need to set just a tuple
 			//since group by clause is null, i can assume that there is no other selectitem apart from sum(s)
-			int sum=0, evalSumExpr=1;
+			int sum=0, evalSumExpr=1, count=0;
 			
 			for(SelectItem<?> sumItem : selectClause) {
 				evalSumExpr=1;
@@ -59,7 +61,7 @@ public class SumOperator extends Operator{
                         Function function = (Function) exp;
                         
                         Expression parameters = function.getParameters();
-                        System.out.println("printiing outside the loop "+parameters.toString());
+                        System.out.println("SUMOP: printiing outside the loop "+parameters.toString());
                         
                         if(!parameters.toString().contains("*")) {
                         	//doesnt contain * that means its either sum(number) or sum(column)
@@ -99,18 +101,12 @@ public class SumOperator extends Operator{
                             			number = Integer.parseInt(individualNums);
                             		}
                             		ans = ans * number;
-                            		
-                            		
-                            		//if it is a number
-//                            		else {
-//                                		evalSumExpr = evalSumExpr * Integer.parseInt(individualNums);
-//                            		}
                             	}
                         		sum = sum + ans;
                         	}
                         		
                         }
-                        System.out.println("printing the result = "+sum);
+                        System.out.println("SUMOP: printing the result = "+sum);
                         
                         //calculate the sum based on the number of tuples in bufferTuple
 					}
@@ -118,9 +114,10 @@ public class SumOperator extends Operator{
 				}
 				//illi tuple ge add maadbodu
 				tupleToReturn.add(sum);
+				projectedAttributeHashIndex.put(sumItem.toString().toLowerCase(), count++);
 			}
 			outputTuples.add(tupleToReturn);
-			System.out.println("the output of the expression is "+outputTuples.toString());
+			System.out.println("SUMOP: the output of the expression is "+outputTuples.toString());
 			
 		}
 		
@@ -128,12 +125,19 @@ public class SumOperator extends Operator{
 		if( !selectClause.toString().toLowerCase().contains("sum") && groupByClause!=null ) {
 			//need to just group by. here need to check if the condition in select clause matches the condition in group by clause.
 			//the clause present in select needs to be present in group by too... assuming this and proceeding. 
+			HashSet<Tuple> uniqueTuples = new HashSet<Tuple>();
+			
 			for (Tuple scannedTuple : bufferTuples) {
 				Tuple tempTuple = new Tuple();
 				for(Object groupByObj : groupByClause ) {
 					tempTuple.add(   scannedTuple.get(   attributeHashIndex.get(   groupByObj.toString().toLowerCase()  )    )    );
 				}
 				uniqueTuples.add(tempTuple);
+			}
+			
+			int count=0;
+			for(Object groupByObj : groupByClause ) {
+				projectedAttributeHashIndex.put(groupByObj.toString().toLowerCase(), count++);
 			}
 			
 			//copy uniqueTuples to outputTuples
@@ -168,7 +172,7 @@ public class SumOperator extends Operator{
 	@Override
 	protected Map<String, Integer> getAttributeHashIndex() {
 		// TODO Auto-generated method stub
-		return null;
+		return this.projectedAttributeHashIndex;
 	}
 
 	@Override

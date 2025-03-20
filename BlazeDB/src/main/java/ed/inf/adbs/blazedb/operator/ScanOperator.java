@@ -33,7 +33,7 @@ public class ScanOperator extends Operator {
 		}
 		
 		
-		System.out.println("The attributeHashIndex for "+tableName+ "table is "+attributeHashIndex.toString());
+		System.out.println("SCANOP: The attributeHashIndex for "+tableName+ "table is "+attributeHashIndex.toString());
 //		for(String x: this.schema) {
 //			System.out.println("Ashwishshshsh--------"+attributeHashIndex.values());
 //		}

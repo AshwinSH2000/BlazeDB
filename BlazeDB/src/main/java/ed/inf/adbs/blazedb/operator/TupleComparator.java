@@ -26,10 +26,10 @@ public class TupleComparator implements Comparator<Tuple> {
             //int index = tuple1.getColumnIndex(columnName); 
             //need to get atttributehashIndex
             
-        	System.out.println("raise ypur armsm up and singgg..om shanthi oommm "+attributeHashIndex.keySet().toString());
-        	System.out.println("raise ypur armsm up and singgg..om shanthi oommm "+attributeHashIndex.values().toString());
+        	System.out.println("TUPL_COMP: raise ypur armsm up and singgg..om shanthi oommm "+attributeHashIndex.keySet().toString());
+        	System.out.println("TUPL_COMP: raise ypur armsm up and singgg..om shanthi oommm "+attributeHashIndex.values().toString());
         	System.out.println(orderBy.getExpression().toString().toLowerCase()+" is "+attributeHashIndex.get(orderBy.getExpression().toString().toLowerCase()));
-        	System.out.println("raise ypur armsm up and singgg..om shanthi oommm "+columnName.toLowerCase());
+        	System.out.println("TUPL_COMP: raise ypur armsm up and singgg..om shanthi oommm "+columnName.toLowerCase());
 
             int index = attributeHashIndex.get(columnName.toLowerCase());
             int value1 = tuple1.get(index);

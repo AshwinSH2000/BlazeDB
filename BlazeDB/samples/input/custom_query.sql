@@ -1,1 +1,1 @@
-SELECT SUM(3), SUM(2*2*2), SUM(Course.G*Course.g) FROM Course;
+SELECT * FROM Student, Enrolled WHERE 42 = 43;

@@ -44,7 +44,7 @@ public class EvaluateSelection extends ExpressionDeParser{
         // Apply AND logic
         result = leftResult && rightResult;
         
-        System.out.println("Inside the AndExpression...for this qiery this shuld not be displayed");
+        System.out.println("EVALSELECTION: Inside the AndExpression...for this qiery this shuld not be displayed");
     }
     
     
@@ -99,7 +99,7 @@ public class EvaluateSelection extends ExpressionDeParser{
     	
     	result = (leftValue < rightValue);
     	
-    	System.out.println("binary expression result = "+result);
+    	System.out.println("EVALSELECTION: binary expression result = "+result);
     }
     
     public void processBinaryExpression(GreaterThanEquals expr) {
@@ -111,7 +111,7 @@ public class EvaluateSelection extends ExpressionDeParser{
     	
     	result = (leftValue >= rightValue);
     	
-    	System.out.println("binary expression result = "+result);
+    	System.out.println("EVALSELECTION: binary expression result = "+result);
     }
     
     public void processBinaryExpression(MinorThanEquals expr) {
@@ -123,7 +123,7 @@ public class EvaluateSelection extends ExpressionDeParser{
     	
     	result = (leftValue <= rightValue);
     	
-    	System.out.println("binary expression result = "+result);
+    	System.out.println("EVALSELECTION: binary expression result = "+result);
     }
     
     public void processBinaryExpression(NotEqualsTo expr) {
@@ -135,7 +135,7 @@ public class EvaluateSelection extends ExpressionDeParser{
     	
     	result = (leftValue != rightValue);
     	
-    	System.out.println("binary expression result = "+result);
+    	System.out.println("EVALSELECTION: binary expression result = "+result);
     }
 
     
@@ -171,7 +171,7 @@ public class EvaluateSelection extends ExpressionDeParser{
 	@Override
     public void visit(Column column) {
 		
-		System.out.println("THE COLUMN INSIDE THE VISIT FUNCTION IS "+column);
+		System.out.println("EVALSELECTION: THE COLUMN INSIDE THE VISIT FUNCTION IS "+column);
 		
 		//commented the below two lines because i now started using tableName.columnName as keys in attributeHashIndex
         //String columnName = column.getColumnName();
@@ -179,7 +179,7 @@ public class EvaluateSelection extends ExpressionDeParser{
 
         if (attributeHashIndex.containsKey(column.toString().toLowerCase())) {
             currentValue = tuple.get(   attributeHashIndex.get(   column.toString().toLowerCase()   )).toString();
-            System.out.println("The current column value is ASHWINSH MAN "+currentValue);
+            System.out.println("EVALSELECTION: The current column value is ASHWINSH MAN "+currentValue);
         }
         
     }
@@ -187,7 +187,7 @@ public class EvaluateSelection extends ExpressionDeParser{
     @Override
     public void visit(LongValue longValue) {
         currentValue = String.valueOf(longValue.getValue());
-        System.out.println("Inside the visit(long)...identakeee "+ currentValue);
+        System.out.println("EVALSELECTION: Inside the visit(long)...identakeee "+ currentValue);
 
     }
 

@@ -27,6 +27,10 @@ public class Tuple {
 			x.add(number);
 		}
 	}
+	
+	public void updateTuple(int pos, int num) {
+		x.set(pos, num);
+	}
 
 	@Override
 	public String toString() {

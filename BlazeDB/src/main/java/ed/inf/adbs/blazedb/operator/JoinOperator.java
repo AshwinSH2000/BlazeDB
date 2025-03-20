@@ -72,10 +72,10 @@ public class JoinOperator extends Operator{
 				if(joinExpression==null) {
 					
 					Tuple newlyJoinedTuple = concatenateTuples(leftTuple, rightTuple);
-					System.out.println("Left Tuple: ................. "+leftTuple.toString());
-					System.out.println("Right Tuple: ................. "+rightTuple.toString());
+					System.out.println("JOINOP: Left Tuple: ................. "+leftTuple.toString());
+					System.out.println("JOINOP: Right Tuple: ................. "+rightTuple.toString());
 
-					System.out.println("Concatenated Tuple: ................. "+newlyJoinedTuple.toString());
+					System.out.println("JOINOP: Concatenated Tuple: ................. "+newlyJoinedTuple.toString());
 
 					rightTuple = rightChild.getNextTuple();
 					return newlyJoinedTuple;	
@@ -190,8 +190,8 @@ public class JoinOperator extends Operator{
 //					    System.out.println("No column name found.");
 //					}
 					
-					System.out.println("kjsdhksjfhfshdkfvsf + leftcol = "+leftCol);
-					System.out.println("kjsdhksjfhfshdkfvsf + rightCol = "+rightCol);
+					System.out.println("JOINOP: kjsdhksjfhfshdkfvsf + leftcol = "+leftCol);
+					System.out.println("JOINOP: kjsdhksjfhfshdkfvsf + rightCol = "+rightCol);
 
 					//rightTuple = rightChild.getNextTuple();
 					
@@ -214,10 +214,10 @@ public class JoinOperator extends Operator{
 			}
 			
 			rightChild.reset();
-			System.out.println("Called the right reset  broooooooooooooooooooooooooooo");
+			System.out.println("JOINOP: Called the right reset  broooooooooooooooooooooooooooo");
 
 			leftTuple = leftChild.getNextTuple();
-			System.out.println("Called the leftnet tuple broooooooooooooooooooooooooooo");
+			System.out.println("JOINOP: Called the leftnet tuple broooooooooooooooooooooooooooo");
 
 			
 		}
