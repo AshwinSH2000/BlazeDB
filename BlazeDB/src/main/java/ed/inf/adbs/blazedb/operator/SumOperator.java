@@ -62,9 +62,10 @@ public class SumOperator extends Operator{
 				evalSumExpr=1;
 				if(sumItem instanceof SelectItem) {										//this was SelectExpressionItem ..next row too
 					Expression exp = ((SelectItem)sumItem).getExpression();
-					if (exp instanceof Function) {
+					if (exp instanceof Function && exp.toString().toLowerCase().contains("sum")) {
                         Function function = (Function) exp;
-                        
+                        System.out.println("SUMOP: printiing the function "+exp.toString());
+
                         Expression parameters = function.getParameters();
                         System.out.println("SUMOP: printiing outside the loop "+parameters.toString());
                         
@@ -114,6 +115,10 @@ public class SumOperator extends Operator{
                         System.out.println("SUMOP: printing the result = "+sum);
                         
                         //calculate the sum based on the number of tuples in bufferTuple
+					}
+					else
+					{
+						return;
 					}
 					
 				}

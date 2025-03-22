@@ -44,6 +44,9 @@ public class BlazeDB {
 		String databaseDir = args[0];
 		String inputFile = args[1];
 		String outputFile = args[2];
+		
+		
+		
 
 		// Just for demonstration, replace this function call with your logic
 
@@ -106,6 +109,10 @@ public class BlazeDB {
 				Select select = (Select) statement;
 
 				SELECT=select.getPlainSelect().getSelectItems();
+				
+				List<SelectItem<?>> x =select.getPlainSelect().getSelectItems();
+				System.out.println("iughiufghsfughs iuerhgre iuregh a "+x.toString().toLowerCase().contains("sum"));
+				
 				FROM=select.getPlainSelect().getFromItem();
 				JOIN=select.getPlainSelect().getJoins();
 				WHERE=select.getPlainSelect().getWhere();

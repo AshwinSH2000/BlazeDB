@@ -1,1 +1,1 @@
-SELECT * FROM Course Order By Course.E;
+SELECT SUM(Student.A * Student.B) FROM Student;
