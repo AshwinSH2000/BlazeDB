@@ -15,6 +15,7 @@ public class ScanOperator extends Operator {
 	private List<String> schema;
 	private String currentLine;
 	private Map<String, Integer> attributeHashIndex;
+	int noOfTuples;
 
 	public ScanOperator(String tableName) {       
 		
@@ -32,7 +33,7 @@ public class ScanOperator extends Operator {
 			attributeHashIndex.put(x, index++);
 		}
 		
-		
+		noOfTuples=0;
 		System.out.println("SCANOP: The attributeHashIndex for "+tableName+ "table is "+attributeHashIndex.toString());
 //		for(String x: this.schema) {
 //			System.out.println("Ashwishshshsh--------"+attributeHashIndex.values());
@@ -73,6 +74,7 @@ public class ScanOperator extends Operator {
 					tuple.add(Integer.parseInt(value.trim()));
 				}
 				System.out.println();
+				noOfTuples++;
 				return tuple;
 			} else {
 				return null; // End of file

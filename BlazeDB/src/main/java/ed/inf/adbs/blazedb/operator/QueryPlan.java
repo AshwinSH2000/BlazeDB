@@ -214,8 +214,10 @@ public class QueryPlan {
 				leftTableName = leftTableName.concat(" join "+join.toString());
 				
 				
-				if(listTablesJoinClause.size()>1)
-					leftChild = new SelectionOperator(leftChild, tablesJoinClause, attributeHashIndex_lChild);
+				if(!(WHERE==null)) {
+					if(listTablesJoinClause.size()>1)
+						leftChild = new SelectionOperator(leftChild, tablesJoinClause, attributeHashIndex_lChild);
+				}
 				
 				System.out.println("QUERYPLAN: after updation lahi is "+attributeHashIndex_lChild.toString());
 				System.out.println("QUERYPLAN: after updation rahi is "+attributeHashIndex_rChild.toString());
