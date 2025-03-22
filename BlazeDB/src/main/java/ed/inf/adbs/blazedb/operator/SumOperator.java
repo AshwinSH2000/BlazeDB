@@ -1,10 +1,13 @@
 package ed.inf.adbs.blazedb.operator;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+
+import javax.sql.rowset.serial.SQLOutputImpl;
 
 import ed.inf.adbs.blazedb.Tuple;
 import net.sf.jsqlparser.expression.Expression;
@@ -46,12 +49,16 @@ public class SumOperator extends Operator{
 			bufferTuples.add(tuple);
 		}
 		
+		System.out.println("INSIDE SUM OPERATOR....1");
+		
 		//if there are no tuples obtained from the child operator, return immediately and avoid all unnecessary computations below
 		if(bufferTuples.size()==0){
 			return;
 		}
 		
 		if(selectClause.toString().toLowerCase().contains("sum") && groupByClause == null) {
+			
+			System.out.println("INSIDE SUM OPERATOR....2");
 			
 			Tuple tupleToReturn = new Tuple();
 			//need to set just a tuple
@@ -113,7 +120,6 @@ public class SumOperator extends Operator{
                         		
                         }
                         System.out.println("SUMOP: printing the result = "+sum);
-                        
                         //calculate the sum based on the number of tuples in bufferTuple
 					}
 					else
@@ -125,6 +131,7 @@ public class SumOperator extends Operator{
 				//illi tuple ge add maadbodu
 				tupleToReturn.add(sum);
 				projectedAttributeHashIndex.put(sumItem.toString().toLowerCase(), count++);
+				System.out.println(projectedAttributeHashIndex.toString()+" is the 39845793 93847593 9847593 9384753 939 39847");
 			}
 			outputTuples.add(tupleToReturn);
 			System.out.println("SUMOP: the output of the expression is "+outputTuples.toString());
@@ -133,6 +140,9 @@ public class SumOperator extends Operator{
 		
 		
 		if( !selectClause.toString().toLowerCase().contains("sum") && groupByClause!=null ) {
+			
+			System.out.println("INSIDE SUM OPERATOR....3");
+			
 			//need to just group by. here need to check if the condition in select clause matches the condition in group by clause.
 			//the clause present in select needs to be present in group by too... assuming this and proceeding. 
 			HashSet<Tuple> uniqueTuples = new HashSet<Tuple>();
@@ -157,10 +167,173 @@ public class SumOperator extends Operator{
 		}
 		
 		if(selectClause.toString().toLowerCase().contains("sum") && groupByClause!=null) {
-		;
+			
+			System.out.println("INSIDE SUM OPERATOR....4");
+			HashMap<Tuple, Tuple> uniqueTuples = new HashMap<Tuple, Tuple>();
+
+		
 			//mix of both. first need to group by and then apply the sum. 
+			for (Tuple scannedTuple: bufferTuples) {
+				Tuple tupleHashKey = new Tuple();
+				
+				for(Object obj : groupByClause) {
+					tupleHashKey.add(scannedTuple.get(attributeHashIndex.get(obj.toString().toLowerCase())));
+					System.out.println("SUM OPERATOR: "+tupleHashKey.toString());
+				}
+				Tuple tupleHashValue = new Tuple();
+				int colValue=0;
+				
+				
+				if(uniqueTuples.containsKey(tupleHashKey))
+				{
+					Tuple presentTuple = uniqueTuples.get(tupleHashKey);
+//					System.out.println("The tuple that was already PRESENT INSIDE UNIQIE TUPLES IS................."+presentTuple.toString());
+					int presentValue = 0;
+					System.out.println("Its present");
+					for (SelectItem<?> item : selectClause) {
+						Expression exp = ((SelectItem)item).getExpression();
+						if(exp instanceof Function) {
+							Function function = (Function) exp;
+							
+							Expression parameters = function.getParameters();
+							String[] stringParameters= parameters.toString().split("\\*");
+							if(stringParameters.length==1) {
+		                    	
+		                    	try {
+		                    		colValue = Integer.parseInt(stringParameters[0].strip());
+		                    	}catch(Exception e) {
+		                    		colValue = scannedTuple.get(attributeHashIndex.get(stringParameters[0].toLowerCase()));
+		                    	}
+		                    	System.out.println("The COLUMN VALUE OF THIS SINGLE VALUE INSIDE SUM IS "+colValue);
+		                    	
+		                    	
+		                    	presentValue = presentTuple.get(projectedAttributeHashIndex.get(exp.toString().toLowerCase()));
+		                    	tupleHashValue.add(presentValue+colValue);
+		                    }
+							else {
+								//it means parameters are more than 1
+								int product=1;
+								for (String indvParams : stringParameters) {
+
+		                    		try {
+		                    			colValue = Integer.parseInt(indvParams.strip());
+		                    			product = product * colValue;
+		                    		}catch(Exception e) {
+		                    			colValue = scannedTuple.get(attributeHashIndex.get(indvParams.strip().toLowerCase()));
+		                    			product = product * colValue;
+		                    		}
+		                    	}
+								
+		                    	System.out.println("The product of the terms inside the column is "+product);
+		                    	presentValue = presentTuple.get(projectedAttributeHashIndex.get(exp.toString().toLowerCase()));
+		                    	tupleHashValue.add(product+presentValue);
+							}
+						}
+						else {
+							//it is not a function at all.. which means a normal column that must be summed here. 
+							colValue=scannedTuple.get(attributeHashIndex.get(exp.toString().toLowerCase()));
+							//presentValue = presentTuple.get(projectedAttributeHashIndex.get(exp.toString().toLowerCase()));
+							//tupleHashValue.add(colValue+presentValue);
+							tupleHashValue.add(colValue);
+
+							
+						}
+						
+					}
+					uniqueTuples.put(tupleHashKey, tupleHashValue);
+					System.out.println("One of the tuples that i just put in is..." + uniqueTuples.toString());
+
+				}
+				else
+				{
+					System.out.println("its not present");
+					int counter=0;
+					//iterate over the select clause and select the columns to be put into it
+					for (SelectItem<?> item: selectClause) {
+						
+						//if it is instanceof function, extract uska inside
+						//if inside is an integer, put it directly 
+						//if it is a col, then extract uska value
+						
+						Expression exp = ((SelectItem)item).getExpression();
+
+						if(exp instanceof Function) {
+							//eg sum(integer) or sum(column)
+							Function function = (Function) exp;
+							
+							//this might give error is functions arent passed no?
+							//umm no because i am coming into this if case only after checking if it is a function
+							
+	                        Expression parameters = function.getParameters();
+//	                        System.out.println(parameters.toString());
+	                        
+	                        String[] stringParameters= parameters.toString().split("\\*");
+		                    
+		                    if(stringParameters.length==1) {
+		                    	
+		                    	try {
+		                    		colValue = Integer.parseInt(stringParameters[0].strip());
+		                    	}catch(Exception e) {
+		                    		colValue = scannedTuple.get(attributeHashIndex.get(stringParameters[0].toLowerCase()));
+		                    	}
+		                    	System.out.println("The COLUMN VALUE OF THIS SINGLE VALUE INSIDE SUM IS "+colValue);
+		                    	tupleHashValue.add(colValue);
+		                    	
+		                    	projectedAttributeHashIndex.putIfAbsent(  exp.toString().toLowerCase(), counter++  );
+		                    	
+		                    	
+		                    	
+		                    }
+		                    else {
+		                    	//it means the parameters are more than one
+		                    	//we do not know if it is a column value of integer.. so iterate over all and check in each chase
+		                    	int product = 1;
+		                    	for (String indvParams : stringParameters) {
+
+		                    		try {
+		                    			colValue = Integer.parseInt(indvParams.strip());
+		                    			product = product * colValue;
+		                    		}catch(Exception e) {
+		                    			colValue = scannedTuple.get(attributeHashIndex.get(indvParams.strip().toLowerCase()));
+		                    			product = product * colValue;
+		                    		}
+		                    	}
+		                    	System.out.println("The product of the terms inside the column is "+product);
+		                    	tupleHashValue.add(product);
+		                    	projectedAttributeHashIndex.putIfAbsent(  exp.toString().toLowerCase(), counter++  );
+
+
+		                    }
+
+	                        
+	         	                        
+						}
+						else
+						{
+							//since it is not a function it has to be a normal column of the table
+							colValue=scannedTuple.get(attributeHashIndex.get(exp.toString().toLowerCase()));
+							tupleHashValue.add(colValue);
+							
+	                    	projectedAttributeHashIndex.putIfAbsent(  exp.toString().toLowerCase(), counter++  );
+
+						}
+					}
+					uniqueTuples.put(tupleHashKey, tupleHashValue);
+					System.out.println("One of the tuples that i just put in is..." + uniqueTuples.toString());
+				
+				}
+
+			}
+			System.out.println("projectedaHI is..." + projectedAttributeHashIndex.toString());
+
+			
+			for (Map.Entry<Tuple, Tuple> entry : uniqueTuples.entrySet()) {
+				outputTuples.add(entry.getValue());
+
+			}
 		}
-	
+		
+		System.out.println("INSIDE SUM OPERATOR....5");
 		
 	}
 	

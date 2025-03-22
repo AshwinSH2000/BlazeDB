@@ -1,1 +1,1 @@
-SELECT SUM(Student.A * Student.B) FROM Student;
+SELECT Enrolled.E, Enrolled.H from Enrolled GROUP BY Enrolled.H;
