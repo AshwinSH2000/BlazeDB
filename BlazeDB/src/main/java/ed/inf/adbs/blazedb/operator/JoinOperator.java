@@ -86,6 +86,8 @@ public class JoinOperator extends Operator{
 					
 					//extract the table name and column name for both tables. match them to see if they are in order.. 
 					//i mean say first table is student but in the join clause it can be cpurse.x = student.x, in that case just swap the conditions
+					
+					System.out.println("This is where the error occured: "+joinExpression.toString());
 					ComparisonOperator e = (ComparisonOperator) joinExpression;
 					
 					String leftExpressionString = e.getLeftExpression().toString();
@@ -104,66 +106,7 @@ public class JoinOperator extends Operator{
 	                    rightTuple = rightChild.getNextTuple();
 	                    return newlyJoinedTuple;
 	                }
-//					
-//					if(joinExpression instanceof EqualsTo) {
-//						e = (EqualsTo) joinExpression;
-//						if(leftTuple.get(leftAttributeHashIndex.get(leftCol))==rightTuple.get(rightAttributeHashIndex.get(rightCol))) {
-//							Tuple newlyJoinedTuple = concatenateTuples(leftTuple, rightTuple);
-//							rightTuple = rightChild.getNextTuple();
-//							return newlyJoinedTuple;
-//						}
-////						else {
-////							rightTuple = rightChild.getNextTuple();
-////							System.out.println("dvanced to next tuple because no match broooooooooooooooooooooooooooo");
-////
-////						}
-//
-//					}
-//					if(joinExpression instanceof NotEqualsTo) {
-//						e = (NotEqualsTo) joinExpression;
-//						if(leftTuple.get(leftAttributeHashIndex.get(leftCol))!=rightTuple.get(rightAttributeHashIndex.get(rightCol))) {
-//							Tuple newlyJoinedTuple = concatenateTuples(leftTuple, rightTuple);
-//							rightTuple = rightChild.getNextTuple();
-//							return newlyJoinedTuple;
-//						}
-//
-//					}
-//					if(joinExpression instanceof GreaterThan) {
-//						e = (GreaterThan) joinExpression;
-//						if(leftTuple.get(leftAttributeHashIndex.get(leftCol))>rightTuple.get(rightAttributeHashIndex.get(rightCol))) {
-//							Tuple newlyJoinedTuple = concatenateTuples(leftTuple, rightTuple);
-//							rightTuple = rightChild.getNextTuple();
-//							return newlyJoinedTuple;
-//						}
-//
-//					}
-//					if(joinExpression instanceof GreaterThanEquals) {
-//						e = (GreaterThanEquals) joinExpression;
-//						if(leftTuple.get(leftAttributeHashIndex.get(leftCol))>=rightTuple.get(rightAttributeHashIndex.get(rightCol))) {
-//							Tuple newlyJoinedTuple = concatenateTuples(leftTuple, rightTuple);
-//							rightTuple = rightChild.getNextTuple();
-//							return newlyJoinedTuple;
-//						}
-//
-//					}
-//					if(joinExpression instanceof MinorThanEquals) {
-//						e = (MinorThanEquals) joinExpression;
-//						if(leftTuple.get(leftAttributeHashIndex.get(leftCol))<=rightTuple.get(rightAttributeHashIndex.get(rightCol))) {
-//							Tuple newlyJoinedTuple = concatenateTuples(leftTuple, rightTuple);
-//							rightTuple = rightChild.getNextTuple();
-//							return newlyJoinedTuple;
-//						}
-//
-//					}
-//					if(joinExpression instanceof MinorThan) {
-//						e = (MinorThan) joinExpression;
-//						if(leftTuple.get(leftAttributeHashIndex.get(leftCol))<rightTuple.get(rightAttributeHashIndex.get(rightCol))) {
-//							Tuple newlyJoinedTuple = concatenateTuples(leftTuple, rightTuple);
-//							rightTuple = rightChild.getNextTuple();
-//							return newlyJoinedTuple;
-//						}
-//
-//					}
+
 					rightTuple = rightChild.getNextTuple();
 
 					
@@ -177,36 +120,11 @@ public class JoinOperator extends Operator{
 					
 					//assume the order matches. so the lefttuple belongs to leftAttributeHashIndex and so on.
 					
-					
-					//String[] leftCol = e.getLeftExpression().toString().split(".");
-					//String[] rightCol = e.getRightExpression().toString().split(".");
-					
-					
-					
-//					if (splitLeftExpr.length > 1) {
-//					    String leftCol = splitLeftExpr[1];  // the second part is the column name
-//					    System.out.println(""+leftCol);  
-//					} else {
-//					    System.out.println("No column name found.");
-//					}
-					
+
 					System.out.println("JOINOP: kjsdhksjfhfshdkfvsf + leftcol = "+leftCol);
 					System.out.println("JOINOP: kjsdhksjfhfshdkfvsf + rightCol = "+rightCol);
 
 					//rightTuple = rightChild.getNextTuple();
-					
-//					if(leftTuple.get(leftAttributeHashIndex.get(leftCol))==rightTuple.get(rightAttributeHashIndex.get(rightCol))) {
-//						Tuple newlyJoinedTuple = concatenateTuples(leftTuple, rightTuple);
-//						rightTuple = rightChild.getNextTuple();
-//						System.out.println("Called the rightnxt tuple broooooooooooooooooooooooooooo");
-//
-//						return newlyJoinedTuple;
-//					}
-//					else {
-//						rightTuple = rightChild.getNextTuple();
-//						System.out.println("dvanced to next tuple because no match broooooooooooooooooooooooooooo");
-//
-//					}
 					
 
 				}
