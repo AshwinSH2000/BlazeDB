@@ -255,11 +255,23 @@ public class QueryPlan {
 			
 			// sorting can be done here as well but it leads to larger tuples being compared which can reduce the speed
 			if(!SELECT.toString().contains("[*]")) {
-				System.out.println("QUERYPLAN: Detected projection criteria...so root is projectionoperator");
-				leftChild = new ProjectionOperator(leftChild, SELECT, attributeHashIndex_lChild);
-				//pulling the new attribute hash index containing the projected columns only
-				attributeHashIndex_lChild = leftChild.getAttributeHashIndex();
+				if(!SELECT.toString().toLowerCase().contains("sum") && GROUPBY == null) {
+					System.out.println("QUERYPLAN: Detected projection criteria...so root is projectionoperator");
+					leftChild = new ProjectionOperator(leftChild, SELECT, attributeHashIndex_lChild);
+					//pulling the new attribute hash index containing the projected columns only
+					attributeHashIndex_lChild = leftChild.getAttributeHashIndex();
+				}
+				else
+				{
+					System.out.println("QUERYPLAN: JOIN is present...Inside the if block to check for projection but this one eithrt has sum, group by or both");
+					leftChild = new SumOperator(leftChild, GROUPBY, SELECT, attributeHashIndex_lChild);
+					attributeHashIndex_lChild = leftChild.getAttributeHashIndex();
+					System.out.println("QUERYPLAN: aHI after sum only aggregates without the group by clause is..."+attributeHashIndex_lChild.toString());
+				}
+				
 			}
+			
+			
 			
 			if(DISTINCT!=null) {
 				System.out.println("QUERYPLAN: performing duplicate elimination....dishkyuun dishkyuunn...");

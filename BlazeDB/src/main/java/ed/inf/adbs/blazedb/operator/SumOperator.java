@@ -67,6 +67,7 @@ public class SumOperator extends Operator{
 			
 			for(SelectItem<?> sumItem : selectClause) {
 				evalSumExpr=1;
+				sum=0;
 				if(sumItem instanceof SelectItem) {										//this was SelectExpressionItem ..next row too
 					Expression exp = ((SelectItem)sumItem).getExpression();
 					if (exp instanceof Function && exp.toString().toLowerCase().contains("sum")) {
@@ -83,6 +84,8 @@ public class SumOperator extends Operator{
                         	if(attributeHashIndex.containsKey(parameters.toString().toLowerCase())) {
                         		for( Tuple tempTuple : bufferTuples) {
                         			sum += tempTuple.get(attributeHashIndex.get(parameters.toString().toLowerCase()));
+                            		System.out.println("DEBUGGING....1: sum = "+sum);
+
                         		}
                         	}
                         	
@@ -90,6 +93,7 @@ public class SumOperator extends Operator{
                         	else {
                         		evalSumExpr = Integer.parseInt(parameters.toString());
                                 sum = bufferTuples.size()*evalSumExpr;
+                        		System.out.println("DEBUGGING....2: sum = "+sum);
 
                         	}
                         	
@@ -114,8 +118,11 @@ public class SumOperator extends Operator{
                             			number = Integer.parseInt(individualNums);
                             		}
                             		ans = ans * number;
+                            		System.out.println("DEBUGGING....3: answer = "+ans);
                             	}
                         		sum = sum + ans;
+                        		System.out.println("DEBUGGING....4: sum = "+sum);
+
                         	}
                         		
                         }
