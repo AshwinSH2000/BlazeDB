@@ -18,7 +18,7 @@ public class JoinOperator extends Operator{
 	
 	private Operator leftChild;
 	private Operator rightChild;
-	private Expression joinExpression;
+	private List<Expression> joinExpression;
 	private Tuple leftTuple;
 	private Tuple rightTuple;
 	private Map<String, Integer> leftAttributeHashIndex;
@@ -40,7 +40,7 @@ public class JoinOperator extends Operator{
 	}
 	
 	//function overloading. just differs by a argument passed from the above method. 
-	public JoinOperator(Operator lChild, Operator rChild, Expression tablesJoinClause, Map<String, Integer> leftAttributeHashIndex, Map<String, Integer> rightAttributeHashIndex) {
+	public JoinOperator(Operator lChild, Operator rChild, List<Expression> tablesJoinClause, Map<String, Integer> leftAttributeHashIndex, Map<String, Integer> rightAttributeHashIndex) {
 		this.leftChild = lChild;
 		this.rightChild = rChild;
 		this.joinExpression = tablesJoinClause;
@@ -87,45 +87,74 @@ public class JoinOperator extends Operator{
 					//extract the table name and column name for both tables. match them to see if they are in order.. 
 					//i mean say first table is student but in the join clause it can be cpurse.x = student.x, in that case just swap the conditions
 					
-					System.out.println("This is where the error occured: "+joinExpression.toString());
-					ComparisonOperator e = (ComparisonOperator) joinExpression;
+					if(joinExpression.size()==1) {
+						//that means there is just one condition to join the table
 					
-					String leftExpressionString = e.getLeftExpression().toString();
-					String[] splitLeftExpr = leftExpressionString.split("\\."); 
+						System.out.println("This is where the error occured: "+joinExpression.toString());
+						ComparisonOperator evalExp = (ComparisonOperator) joinExpression.get(0) ;
 					
-					String rightExpressionString = e.getRightExpression().toString();
-					String[] splitRightExpr = rightExpressionString.split("\\."); 
+						String leftExpressionString = evalExp.getLeftExpression().toString();
+						String[] splitLeftExpr = leftExpressionString.split("\\."); 
 					
-					String leftCol = splitLeftExpr[1];
-					String rightCol = splitRightExpr[1];
+						String rightExpressionString = evalExp.getRightExpression().toString();
+						String[] splitRightExpr = rightExpressionString.split("\\."); 
+					
+						String leftCol = splitLeftExpr[1];
+						String rightCol = splitRightExpr[1];
 					
 					
 					
-					if (compareValues(e, leftExpressionString, rightExpressionString)) {
-	                    Tuple newlyJoinedTuple = concatenateTuples(leftTuple, rightTuple);
-	                    rightTuple = rightChild.getNextTuple();
-	                    return newlyJoinedTuple;
-	                }
+						if (compareValues(evalExp, leftExpressionString, rightExpressionString)) {
+							Tuple newlyJoinedTuple = concatenateTuples(leftTuple, rightTuple);
+							rightTuple = rightChild.getNextTuple();
+							return newlyJoinedTuple;
+						}
 
-					rightTuple = rightChild.getNextTuple();
+						rightTuple = rightChild.getNextTuple();
 
 					
 					//i am filtering and sending the condition to this class only if it is for the two tables that are being sent.
 					//hence here, i need not check if the conditions are matching to the tables. 
 					//only thing i need to check is if the order of conditions in join matches the tables 
 					
-					System.out.println(leftAttributeHashIndex.toString());
-					System.out.println(rightAttributeHashIndex.toString());
-					System.out.println(joinExpression.toString());
+						System.out.println(leftAttributeHashIndex.toString());
+						System.out.println(rightAttributeHashIndex.toString());
+						System.out.println(joinExpression.toString());
 					
 					//assume the order matches. so the lefttuple belongs to leftAttributeHashIndex and so on.
 					
 
-					System.out.println("JOINOP: kjsdhksjfhfshdkfvsf + leftcol = "+leftCol);
-					System.out.println("JOINOP: kjsdhksjfhfshdkfvsf + rightCol = "+rightCol);
+						System.out.println("JOINOP: kjsdhksjfhfshdkfvsf + leftcol = "+leftCol);
+						System.out.println("JOINOP: kjsdhksjfhfshdkfvsf + rightCol = "+rightCol);
 
 					//rightTuple = rightChild.getNextTuple();
-					
+					}
+					else {
+						//this means there will be more than 1 clause to join two tables
+						//how will 2 simultaneous conditions to join the same table work... like R.a=S.A and R.B = S.B
+						int flag=1;
+						for(Expression e: joinExpression) {
+							ComparisonOperator evalExp = (ComparisonOperator) e ;
+							String leftExpressionString = evalExp.getLeftExpression().toString();
+							String rightExpressionString = evalExp.getRightExpression().toString();
+
+							if(compareValues(evalExp, leftExpressionString, rightExpressionString)) {
+								flag=flag*1;
+							}
+							else {
+								flag=0; 
+								break;
+							}
+						}
+						if(flag==1) {
+							//meaning all the conditions for join is satisfied for these two tuples
+							Tuple newlyJoinedTuple = concatenateTuples(leftTuple, rightTuple);
+							rightTuple = rightChild.getNextTuple();
+							return newlyJoinedTuple;
+						}
+						rightTuple = rightChild.getNextTuple();
+
+					}
 
 				}
 

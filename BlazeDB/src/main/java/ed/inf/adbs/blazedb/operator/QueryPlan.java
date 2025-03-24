@@ -114,7 +114,6 @@ public class QueryPlan {
 			
 			List<Expression> listExp = splitExpression(WHERE);
 			//Splits it in the form of exp1 <op> exp2, exp3 <op> exp4 etc.
-			
 			//do the bwlow only if where clasue is not null...need to add that clie
 			if(!(WHERE==null))
 			{
@@ -147,8 +146,6 @@ public class QueryPlan {
 				
 				
 				//Map<String, Integer> joinedTableAttributes = leftChild.getAttributeHashIndex();
-				List<Expression> listTablesJoinClause = null;
-				Expression tablesJoinClause = null;
 				
 				Operator rightChild = new ScanOperator(join.getRightItem().toString());
 				Map<String, Integer> attributeHashIndex_rChild = rightChild.getAttributeHashIndex();
@@ -172,26 +169,19 @@ public class QueryPlan {
 				//tables and the join
 				
 				if(!(WHERE==null)) {
-					listTablesJoinClause = conditionsForTwoTables(listExp,leftTableName,join.toString());
+					List<Expression> listTablesJoinClause = conditionsForTwoTables(listExp,leftTableName,join.toString());
 					if(!listTablesJoinClause.isEmpty()) {
 						
-						
-						//System.out.println("QUERYPLAN_x: Printing the single join clause joined with AND operator...lets see the op   "+ listTablesJoinClause.toString());
-						tablesJoinClause =  combineWithAnd(listTablesJoinClause);	//this doesnt make much of a difference here
-						
-						if(listTablesJoinClause.size()>1) {
-							leftChild = new JoinOperator(leftChild, rightChild);
-						}
-						else {
-							System.out.println("QUERYPLAN_x: Printing the single join clause joined with AND operator...lets see the op   "+ tablesJoinClause.toString());
-							leftChild = new JoinOperator(leftChild, rightChild, tablesJoinClause, attributeHashIndex_lChild, attributeHashIndex_rChild );
-						}
-						
+						Expression tablesJoinClause =  combineWithAnd(listTablesJoinClause);
+						System.out.println("QUERYPLAN_x: Printing the single join clause joined with AND operator...lets see the op   "+ tablesJoinClause.toString());
+						//leftChild = new JoinOperator(leftChild, rightChild, tablesJoinClause, attributeHashIndex_lChild, attributeHashIndex_rChild );
+						leftChild = new JoinOperator(leftChild, rightChild, listTablesJoinClause, attributeHashIndex_lChild, attributeHashIndex_rChild );
 
 					}
 				
 					else {
 						//System.out.println("Joining the two tables with cross product because of no where join clause present. #################### ");
+						System.out.println("11111111111111111111111111111"+leftTableName.toString()+join.toString());
 						leftChild = new JoinOperator(leftChild, rightChild);
 					}
 				}	
@@ -213,11 +203,6 @@ public class QueryPlan {
 				}
 				leftTableName = leftTableName.concat(" join "+join.toString());
 				
-				
-				if(!(WHERE==null)) {
-					if(listTablesJoinClause.size()>1)
-						leftChild = new SelectionOperator(leftChild, tablesJoinClause, attributeHashIndex_lChild);
-				}
 				
 				System.out.println("QUERYPLAN: after updation lahi is "+attributeHashIndex_lChild.toString());
 				System.out.println("QUERYPLAN: after updation rahi is "+attributeHashIndex_rChild.toString());
