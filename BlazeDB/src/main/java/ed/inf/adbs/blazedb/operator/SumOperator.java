@@ -157,15 +157,26 @@ public class SumOperator extends Operator{
 			for (Tuple scannedTuple : bufferTuples) {
 				Tuple tempTuple = new Tuple();
 				for(Object groupByObj : groupByClause ) {
-					tempTuple.add(   scannedTuple.get(   attributeHashIndex.get(   groupByObj.toString().toLowerCase()  )    )    );
+					//bug is here
+					
+					if(selectClause.toString().toLowerCase().contains(groupByObj.toString().toLowerCase())) {
+						System.out.println("SumOperator x: The value of group by obj is here: "+groupByObj.toString() );
+						tempTuple.add(   scannedTuple.get(   attributeHashIndex.get(   groupByObj.toString().toLowerCase()  )    )    );
+					}
+					
 				}
 				uniqueTuples.add(tempTuple);
 			}
 			
 			int count=0;
 			for(Object groupByObj : groupByClause ) {
+				if(selectClause.toString().toLowerCase().contains(groupByObj.toString().toLowerCase())) {
+
 				projectedAttributeHashIndex.put(groupByObj.toString().toLowerCase(), count++);
+				}
 			}
+			
+			System.out.println("This is the aHI after putting the necessary typles: "+ projectedAttributeHashIndex.toString());
 			
 			//copy uniqueTuples to outputTuples
 			for (Tuple temp : uniqueTuples) {

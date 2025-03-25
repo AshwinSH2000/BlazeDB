@@ -1,4 +1,7 @@
-SELECT * FROM Student, Enrolled, Course WHERE Student.A = Enrolled.A AND Enrolled.E = Course.E;
+Select * from student, course, enrolled where course.e = enrolled.e and course.f = enrolled.a and student.a = enrolled.a order by student.b, enrolled.e;
+
+--SELECT * FROM Student, Enrolled, Course WHERE Student.A = Enrolled.A AND Enrolled.E = Course.E;
+
 --SELECT * FROM Student, Course, Enrolled WHERE Student.A = Enrolled.A AND Enrolled.E = Course.E;
 
 --SELECT * FROM Student, Course WHERE Student.A=2;

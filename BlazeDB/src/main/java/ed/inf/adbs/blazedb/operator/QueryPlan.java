@@ -98,7 +98,7 @@ public class QueryPlan {
 
 			return root;
 			
-		}
+		} //end of if join==null
 		
 		if(JOIN!=null) {
 			Operator leftChild = new ScanOperator(FROM.toString());
@@ -280,6 +280,7 @@ public class QueryPlan {
 				leftChild = new DuplicateEliminationOperator(leftChild);
 			}
 			
+			System.out.println("THIS IS BEFORE GOING TO ORDERBY... aHI is "+attributeHashIndex_lChild);
 			if(ORDERBY!=null) {
 				System.out.println("QUERYPLAN: Order by detectd. hence sorting the columns now");
 				leftChild = new SortOperator(leftChild, ORDERBY, attributeHashIndex_lChild);
