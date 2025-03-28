@@ -36,65 +36,37 @@ public class BlazeDB {
 
 	public static void main(String[] args) {
 
+		//this if block checks for the number of arguments passed from command line. 
 		if (args.length != 3) {
 			System.err.println("Usage: BlazeDB database_dir input_file output_file");
 			return;
 		}
-
+		
+		//storing the command line arguments in their respective variables
 		String databaseDir = args[0];
 		String inputFile = args[1];
 		String outputFile = args[2];
-		
-		
-		
 
-		// Just for demonstration, replace this function call with your logic
-
-		//List<String> schema = Arrays.asList("A","B", "C", "D");
-		//		for( String s : schema) {
-		//			System.out.println(s);
-		//		}
-		//		
-		//String tableName = "Student";
-
-		//ScanOperator scan = new ScanOperator(tableName, databaseDir, schema);
-		//ScanOperator scan = new ScanOperator(tableName);
-
-//		int i=0;
-//		Tuple tuple;
-//		while ((tuple = scan.getNextTuple()) != null) {
-//
-//			;
-//		}
-//		scan.reset();
-//
-//		scan.close();
-
+		//creating the database catalog which consists of details about all the tables and schema. 
 		DatabaseCatalog dbc = DatabaseCatalog.getInstance();
+		
+		//loading the database catalog with the contents present in samples/db folder (in this case) or any folder specified during runtime. 
 		dbc.loadDetails(databaseDir);
 		
-		
+		//parsing the input SQL file and writing to the output. 
 		parseQuery(inputFile, outputFile);
-
-		//		String x=dbc.getTableFilePath(tableName);
-		//		TableInfo y=dbc.getTableInfo(tableName);
-		//		List<String> z=dbc.getTableSchema(tableName);
-		//		dbc.displayCatalogHash();
-		//		System.out.println(x);
-		//		System.out.println(y);
-		//		System.out.println(z);
 
 	}
 
 	/**
-	 * Example method for getting started with JSQLParser. Reads SQL statement
-	 * from a file or a string and prints the SELECT and WHERE clauses to screen.
+	 * JSQLParser method. Reads SQL statement from a string and stores them in separate variables
+	 * @param fileName The name of the file that contains the SQL query to be parsed 
+	 * @param outputFile The name of the file where the result will be written.
 	 */
 
-	public static void parseQuery(String filename, String outputFile) {
+	public static void parseQuery(String fileName, String outputFile) {
 		try {
-			Statement statement = CCJSqlParserUtil.parse(new FileReader(filename));
-			//            Statement statement = CCJSqlParserUtil.parse("SELECT Course.cid, Student.name FROM Course, Student WHERE Student.sid = 3");
+			Statement statement = CCJSqlParserUtil.parse(new FileReader(fileName));
 			if (statement != null) {
 
 				//create the necessary variables to hold the parsed and broken down SQL commands
@@ -102,60 +74,45 @@ public class BlazeDB {
 				Distinct DISTINCT;	
 				List<OrderByElement> ORDERBY;
 				ExpressionList GROUPBY;
-//				ExpressionList GROUPBY2;
 				Expression WHERE;
 				List<Join> JOIN;
 				FromItem FROM;
 				Select select = (Select) statement;
 
+				//parsing and extracting all the part of the SQL query
 				SELECT=select.getPlainSelect().getSelectItems();
-				
 				List<SelectItem<?>> x =select.getPlainSelect().getSelectItems();
-				System.out.println("iughiufghsfughs iuerhgre iuregh a "+x.toString().toLowerCase().contains("sum"));
-				
 				FROM=select.getPlainSelect().getFromItem();
 				JOIN=select.getPlainSelect().getJoins();
 				WHERE=select.getPlainSelect().getWhere();
+				ORDERBY=select.getPlainSelect().getOrderByElements();
+				DISTINCT=select.getPlainSelect().getDistinct();
+				
+				//checking for null is essential as getGroupByExpressionList raises exception when getGroupBy returns null
 				if(select.getPlainSelect().getGroupBy()==null) 
 					GROUPBY = null;
 				else
 					GROUPBY=select.getPlainSelect().getGroupBy().getGroupByExpressionList();
-//				GROUPBY2 = select.getPlainSelect().getGroupBy().getGroupByExpressionList();
-				ORDERBY=select.getPlainSelect().getOrderByElements();
-				DISTINCT=select.getPlainSelect().getDistinct();
 
-				System.out.println("Statement: " + select);
-				System.out.println("SELECT : " + SELECT);
-				System.out.println("DISTINCT : "+ DISTINCT);
-				System.out.println("WHERE : " + WHERE);
-				System.out.println("GROUP BY : " + GROUPBY);
-//				System.out.println("GROUP BY EXPRESSION LIST : " + GROUPBY2);
-//				for(Object exp : GROUPBY2) {
-//					System.out.println(exp.toString());
-//				}
-				System.out.println("ORDER BY : "+ ORDERBY);
-				System.out.println("FROM : "+ FROM);				 //but this is displaying only one table. rest in getJoin
-				System.out.println("JOIN  : "+JOIN);
-				
 
+				//code to display the parsed bits from main SQL query. commenting this for final submission. 
 				
-//				Code to test the initialization of databasecatalog				
-//				DatabaseCatalog dbc = DatabaseCatalog.getInstance();
-//				String x=dbc.getTableFilePath(FROM.toString());
-//				TableInfo y=dbc.getTableInfo(FROM.toString());
-//				List<String> z=dbc.getTableSchema(FROM.toString());
-//				dbc.displayCatalogHash();
-//				System.out.println("expecting path= "+x);
-//				System.out.println(y);
-//				System.out.println(z);
+//				System.out.println("Statement: " + select);
+//				System.out.println("SELECT : " + SELECT);
+//				System.out.println("DISTINCT : "+ DISTINCT);
+//				System.out.println("WHERE : " + WHERE);
+//				System.out.println("GROUP BY : " + GROUPBY);
+//				System.out.println("ORDER BY : "+ ORDERBY);
+//				System.out.println("FROM : "+ FROM);				 
+//				System.out.println("JOIN  : "+JOIN);
 				
-				QueryPlan qp = new QueryPlan();
-				Operator root = qp.buildQueryPlan(SELECT, DISTINCT, ORDERBY, GROUPBY, WHERE, JOIN, FROM);
-				execute(root,outputFile);
-
+				//creating a root and passing all the parsed clauses to construct the root operator. 
+				Operator root = QueryPlan.buildQueryPlan(SELECT, DISTINCT, ORDERBY, GROUPBY, WHERE, JOIN, FROM);
+				executeQuery(root,outputFile);
 
 			}
 		} catch (Exception e) {
+			//catch block to hold any exception that occurred during the parsing of the input SQL file
 			System.err.println("Exception occurred during parsing");
 			e.printStackTrace();
 		}
@@ -168,7 +125,7 @@ public class BlazeDB {
 	 * @param root The root operator of the operator tree (assumed to be non-null).
 	 * @param outputFile The name of the file where the result will be written.
 	 */
-	public static void execute(Operator root, String outputFile) {
+	public static void executeQuery(Operator root, String outputFile) {
 		try {
 			// Create a BufferedWriter
 			BufferedWriter writer = new BufferedWriter(new FileWriter(outputFile));
@@ -178,7 +135,7 @@ public class BlazeDB {
 			while (tuple != null) {
 				writer.write(tuple.toString());
 				writer.newLine();
-				System.out.println("hi"+tuple.toString());
+				System.out.println("final outpur: "+tuple.toString());
 				tuple = root.getNextTuple();
 			}
 

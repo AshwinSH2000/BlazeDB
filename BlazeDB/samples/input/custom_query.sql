@@ -3,4 +3,5 @@
 --SELECT distinct STuDenT.d FROM COurSE, Enrolled, Student where student.d>34 group by studenT.b, studeNT.c, STuDenT.d;
 --SELECT student.b,course.f FROM Student, Course GROUP BY student.b, course.f order by student.b, course.f;
 --SELECT SUM(1) FROM Student GROUP BY Student.B;
-SELECT Student.D from Student Group by student.A, student.d;
+--SELECT Student.D from Student Group by student.A, student.d;
+SELECT * FROM STUDENT, COURSE;

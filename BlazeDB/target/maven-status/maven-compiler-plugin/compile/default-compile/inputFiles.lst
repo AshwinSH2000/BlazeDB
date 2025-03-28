@@ -4,7 +4,6 @@
 /Users/ashwinsh/Documents/Edinburgh/ADBS/cw/BlazeDB/src/main/java/ed/inf/adbs/blazedb/operator/SelectionOperator.java
 /Users/ashwinsh/Documents/Edinburgh/ADBS/cw/BlazeDB/src/main/java/ed/inf/adbs/blazedb/operator/Operator.java
 /Users/ashwinsh/Documents/Edinburgh/ADBS/cw/BlazeDB/src/main/java/ed/inf/adbs/blazedb/operator/EvaluateSelection.java
-/Users/ashwinsh/Documents/Edinburgh/ADBS/cw/BlazeDB/src/main/java/ed/inf/adbs/blazedb/ExpressionCombiner.java
 /Users/ashwinsh/Documents/Edinburgh/ADBS/cw/BlazeDB/src/main/java/ed/inf/adbs/blazedb/operator/SortOperator.java
 /Users/ashwinsh/Documents/Edinburgh/ADBS/cw/BlazeDB/src/main/java/ed/inf/adbs/blazedb/operator/QueryPlan.java
 /Users/ashwinsh/Documents/Edinburgh/ADBS/cw/BlazeDB/src/main/java/ed/inf/adbs/blazedb/operator/TupleComparator.java
