@@ -64,6 +64,7 @@ public class ScanOperator extends Operator {
 				Tuple tuple = new Tuple();
 				for (String value : values) {
 					tuple.add(Integer.parseInt(value.trim()));
+					
 				}
 				noOfTuples++;
 				return tuple;

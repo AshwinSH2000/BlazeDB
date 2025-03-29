@@ -1,6 +1,7 @@
 package ed.inf.adbs.blazedb.operator;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 
@@ -27,7 +28,6 @@ public class SortOperator extends Operator{
 		if(sortBuffer.size()==0) {
 			return;
 		}
-		//what exactly is the code to sort..find out bro
 		sortBuffer.sort(new TupleComparator(orderByElements, attributeHashIndex));
 	}
 	

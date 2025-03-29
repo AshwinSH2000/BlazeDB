@@ -24,17 +24,14 @@ public class TupleComparator implements Comparator<Tuple> {
             String columnName = orderBy.getExpression().toString().toLowerCase();
 
             int index = attributeHashIndex.get(columnName.toLowerCase());
-            int value1 = tuple1.get(index);
-            int value2 = tuple2.get(index);
+            int tupleOneVal = tuple1.get(index);
+            int tupleTwoVal = tuple2.get(index);
 
-            int comparisonResult = Integer.compare(value1, value2);
+            int comparisonResult = Integer.compare(tupleOneVal, tupleTwoVal);
             if (comparisonResult != 0) { // Only return if a difference is found
                 return comparisonResult;
-            }
-            
-            
+            }      
         }
-		
 		return 0;
 	}
 

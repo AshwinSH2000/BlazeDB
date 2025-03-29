@@ -1,4 +1,8 @@
-SELECT DISTINCT Enrolled.A from Enrolled;
+SELECT DISTINCT Student.A, Enrolled.E from Student, Enrolled order by Enrolled.E;
+--SELECT SUM(1), SUM(Student.A*Course.g) FROM Student, Enrolled, Course
+--SELECT Enrolled.E, SUM(Enrolled.H * Enrolled.e) FROM Enrolled GROUP BY Enrolled.E;
+--SELECT * FROM COURSE, ENROLLED where course.f = enrolled.a and course.e =enrolled.e;
+--SELECT DISTINCT Enrolled.A from Enrolled;
 --SELECT Student.A, Enrolled.E FROM Student, Enrolled WHERE Student.A <= 4 AND Student.A = Enrolled.A AND Enrolled.H < 50;
 --SELECT Student.A, Enrolled.E, Course.F FROM Student, Enrolled, Course WHERE Student.A = Enrolled.A AND Enrolled.E = Course.E AND Student.B > 150 AND Course.F < 5;
 --SELECT Student.A, Enrolled.E, Course.F, Course.G FROM Student, Enrolled, Course WHERE Student.A = Enrolled.A AND Enrolled.E = Course.E AND Student.B > 150 AND Course.F != 5;

@@ -98,15 +98,14 @@ public class QueryPlan {
 			List<Expression> listExp = splitExpression(WHERE);
 			//Splits it in the form of exp1 <op> exp2, exp3 <op> exp4 etc.
 			//do the bwlow only if where clasue is not null...need to add that clie
-			if(!(WHERE==null))
-			{
-				//System.out.println("Since there is no where clause in this sql query, i will not include the below block of statemets");
+			if(!(WHERE==null)){
 				
+				//This checking for SelectionOperator is just for the first table. 
+				//For all other subsequent tables, it happens inside the following loop. 
 				List<Expression> listTableOneClause=conditionForTable(listExp, leftTableName);
 				if(!listTableOneClause.isEmpty()) {
 					Expression tableOneClause = combineWithAnd(listTableOneClause);
 					leftChild = new SelectionOperator(leftChild, tableOneClause, attributeHashIndex_lChild);
-
 				}
 
 			}
@@ -118,10 +117,7 @@ public class QueryPlan {
 			
 			
 			for( Join join : JOIN) {
-				//System.out.println("join var = "+join.toString());
 				
-				//need to extract the join clause. see the optimal methods. 
-
 				//this loop is to iteratively handle all the tables in JOIN but as of not it is just focussing on one table. 
 				//maybe create a List of Joins again to have multiple tables on the fly
 				
@@ -140,13 +136,7 @@ public class QueryPlan {
 
 						rightChild = new SelectionOperator(rightChild, tableTwoClause, attributeHashIndex_rChild);	
 					}
-				}
-				
 
-				//need to refine this sentence. In the first itr, its ok to have FROM and join. but in all subsequent itrs, you need pass joined
-				//tables and the join
-				
-				if(!(WHERE==null)) {
 					List<Expression> listTablesJoinClause = conditionsForTwoTables(listExp,leftTableName,join.toString());
 					if(!listTablesJoinClause.isEmpty()) {
 						
@@ -157,12 +147,10 @@ public class QueryPlan {
 					}
 				
 					else {
-						//System.out.println("Joining the two tables with cross product because of no where join clause present. #################### ");
 						leftChild = new JoinOperator(leftChild, rightChild);
 					}
 				}	
 				else {
-					//System.out.println("Joining the two tables with cross product because of no where join clause present. #################### ");
 					leftChild = new JoinOperator(leftChild, rightChild);
 				}
 				
@@ -315,11 +303,8 @@ public class QueryPlan {
 				}
 			}
 			
-			}
-			
-			
+			}	
 		}
-		
 		return returnClause;
 	}
 	
@@ -357,18 +342,6 @@ public class QueryPlan {
 	}
 	
 	private static List<Expression> conditionForTable(List<Expression> listExp, String table) {
-       
-//		if (listExp instanceof BinaryExpression binaryExpr) {
-//            Expression left = binaryExpr.getLeftExpression();
-//            Expression right = binaryExpr.getRightExpression();
-//
-//            if (left instanceof Column leftColumn && leftColumn.getTable() != null) {
-//                return leftColumn.getTable().getName().equalsIgnoreCase(table);
-//            }
-//            if (right instanceof Column rightColumn && rightColumn.getTable() != null) {
-//                return rightColumn.getTable().getName().equalsIgnoreCase(table);
-//            }
-//        }
 		
 		List<Expression> returnClause = new ArrayList<>();
 		
@@ -432,10 +405,6 @@ public class QueryPlan {
 				
 					
 			}
-				//if(e.getLeftExpression().toString().toLowerCase()) {}
-				//if lhs contains rhs, then single tbale exp yes
-				//if lhs has the table name and rhs is a constant then yes
-				//if rhs is a table name and lhs is a constant then yes
 		
 		}
         return returnClause;

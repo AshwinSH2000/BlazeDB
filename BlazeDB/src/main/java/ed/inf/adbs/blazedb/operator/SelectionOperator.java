@@ -23,9 +23,6 @@ public class SelectionOperator extends Operator{
 
 	@Override
 	public Tuple getNextTuple() {
-		//in this function, it must call the getNextTuple of scan operator. 
-		//then it needs to check if the tuple matches the where condition.
-		//if yes, then maybe return it. 
 		
 		while(true) {
 			Tuple tuple = root.getNextTuple();
@@ -34,8 +31,6 @@ public class SelectionOperator extends Operator{
 			}
 			EvaluateSelection evalSelection = new EvaluateSelection(attributeHashIndex,tuple);
 
-			
-			
 			if(evalSelection.evaluate(whereCondition)) {
 				return tuple;
 			}

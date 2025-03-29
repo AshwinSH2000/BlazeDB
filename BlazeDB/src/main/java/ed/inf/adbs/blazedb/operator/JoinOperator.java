@@ -14,6 +14,12 @@ import net.sf.jsqlparser.expression.operators.relational.MinorThan;
 import net.sf.jsqlparser.expression.operators.relational.MinorThanEquals;
 import net.sf.jsqlparser.expression.operators.relational.NotEqualsTo;
 
+
+/*
+ * This is the class of JoinOperators. At any instance, it takes two tables and performs a join on them based on the join conditions.
+ * It splits the entire code into two halves. One with a join condition, another without join condition. 
+ * 
+ */
 public class JoinOperator extends Operator{
 	
 	private Operator leftChild;
@@ -66,13 +72,11 @@ public class JoinOperator extends Operator{
 				if(joinExpression==null) {
 					
 					Tuple newlyJoinedTuple = concatenateTuples(leftTuple, rightTuple);
-
 					rightTuple = rightChild.getNextTuple();
 					return newlyJoinedTuple;	
 				}
 				else {
 					//equijoin
-					//need to extract the col from attributehashindex..so i need to pass that one..done passed
 					
 					//extract the table name and column name for both tables. match them to see if they are in order.. 
 					//i mean say first table is student but in the join clause it can be cpurse.x = student.x, in that case just swap the conditions
@@ -108,10 +112,7 @@ public class JoinOperator extends Operator{
 					
 
 					
-					//assume the order matches. so the lefttuple belongs to leftAttributeHashIndex and so on.
-					
-
-						
+					//assume the order matches. so the lefttuple belongs to leftAttributeHashIndex and so on.	
 
 					}
 					else {
@@ -138,18 +139,11 @@ public class JoinOperator extends Operator{
 							return newlyJoinedTuple;
 						}
 						rightTuple = rightChild.getNextTuple();
-
 					}
-
 				}
-
-			}
-			
+			}	
 			rightChild.reset();
-
-			leftTuple = leftChild.getNextTuple();
-
-			
+			leftTuple = leftChild.getNextTuple();	
 		}
 		return null;
 	}
@@ -184,7 +178,6 @@ public class JoinOperator extends Operator{
 		
 		return joinedTuple;
 					
-		
 	}
 
 	@Override

@@ -42,9 +42,7 @@ public class ProjectionOperator extends Operator {
 					String attributeNames = column.getColumnName();
 					colsToBeProjected.add(column.toString().toLowerCase());
 					projectedAttributesHashIndex.put(column.toString().toLowerCase(), index++);
-					
-
-
+		
 				}
 			}
 			
