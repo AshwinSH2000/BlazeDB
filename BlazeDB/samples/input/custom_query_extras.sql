@@ -1,5 +1,24 @@
 Select * from student, course, enrolled where course.e = enrolled.e and course.f = enrolled.a and student.a = enrolled.a order by student.b, enrolled.e;
 
+--SELECT * FROM Student, Enrolled, Course;
+--SELECT Student.A, Enrolled.E FROM Student, Enrolled WHERE Student.A = Enrolled.A;
+--SELECT * FROM Student, Enrolled WHERE Student.A > 4
+--SELECT * FROM Student, Enrolled WHERE Student.A > 4 AND Enrolled.H < 50;
+--SELECT * FROM Student, Enrolled;
+--SELECT * FROM Course;
+--SELECT DISTINCT Student.A, Enrolled.E FROM Student, Enrolled WHERE Student.A = Enrolled.A;
+--SELECT Student.A, Enrolled.E FROM Student, Enrolled WHERE  Student.A > 4 AND Student.A = Enrolled.A;
+--SELECT Student.A, Enrolled.E FROM Student, Enrolled WHERE  Student.A != 4 AND Student.A = Enrolled.A;
+--SELECT Student.A, Enrolled.E FROM Student, Enrolled WHERE Student.A = Enrolled.A AND Student.A != 4;
+--SELECT Student.A, Enrolled.E FROM Student, Enrolled WHERE Student.A = Enrolled.A AND Student.A > 4;
+--SELECT Student.A, Enrolled.E FROM Student, Enrolled WHERE Student.A > 4 AND Student.A = Enrolled.A AND Enrolled.H < 50;
+--SELECT Student.A, Enrolled.E FROM Student, Enrolled WHERE Student.A >= 4 AND Student.A = Enrolled.A AND Enrolled.H < 50;
+--SELECT Student.A, Enrolled.E FROM Student, Enrolled WHERE Student.A <= 4 AND Student.A = Enrolled.A AND Enrolled.H < 50;
+--SELECT Student.A, Enrolled.E, Course.F FROM Student, Enrolled, Course WHERE Student.A = Enrolled.A AND Enrolled.E = Course.E AND Student.B > 150 AND Course.F < 5;
+--SELECT Student.A, Enrolled.E, Course.F, Course.G FROM Student, Enrolled, Course WHERE Student.A = Enrolled.A AND Enrolled.E = Course.E AND Student.B > 150 AND Course.F != 5;
+
+---
+
 --SELECT * FROM Student, Enrolled, Course WHERE Student.A = Enrolled.A AND Enrolled.E = Course.E;
 
 --SELECT * FROM Student, Course, Enrolled WHERE Student.A = Enrolled.A AND Enrolled.E = Course.E;

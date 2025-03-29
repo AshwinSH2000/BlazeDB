@@ -135,7 +135,6 @@ public class BlazeDB {
 			while (tuple != null) {
 				writer.write(tuple.toString());
 				writer.newLine();
-				System.out.println("final outpur: "+tuple.toString());
 				tuple = root.getNextTuple();
 			}
 

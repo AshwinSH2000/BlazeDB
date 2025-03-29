@@ -24,16 +24,10 @@ public class DuplicateEliminationOperator extends Operator{
 			
 			if(  !uniqueTuples.contains(currentTuple)   ) {
 				uniqueTuples.add(currentTuple);
-				System.out.println("DUPELIMOP: "+currentTuple.toString()+" is a unique tuple");
-				System.out.println("DUPELIMOP: "+currentTuple.hashCode()+"\n");
-				for(Tuple individualTuple:uniqueTuples)
-					System.out.println(individualTuple.hashCode());
+
 				return currentTuple;
 			}
-			else {
-				System.out.println(("DUPELIMOP: "+currentTuple.toString()+" is not a unique tuple"));
-				
-			}
+			
 			currentTuple = root.getNextTuple();
 		}
 		return null;

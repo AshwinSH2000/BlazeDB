@@ -43,15 +43,12 @@ public class ProjectionOperator extends Operator {
 					colsToBeProjected.add(column.toString().toLowerCase());
 					projectedAttributesHashIndex.put(column.toString().toLowerCase(), index++);
 					
-					//just a debug statement to check if the tablename and col name is getting split or not. 
-		            //System.out.println("table is " + tableName + " and col is " + attributeNames);
+
 
 				}
 			}
-			//System.out.println("cols to be projected = "+colsToBeProjected);
+			
 		} //end of for each loop
-		
-		//System.out.println("cols to be projected = "+colsToBeProjected);
 
 	}
 	
@@ -65,17 +62,12 @@ public class ProjectionOperator extends Operator {
 			}
 		}	
 		
-//		idu beda mostly because attributeHashIndex doesnt consist the hash of tablename and column 	
-		
-//		DatabaseCatalog dbc = DatabaseCatalog.getInstance();
-//		dbc.getTableSchema(null)
 		return projectedTuple;
 	}
 	
 	@Override
 	public Tuple getNextTuple() {
 		
-		//not sure if while is needed here. but lets add it for now
 		while(true) {
 			Tuple tuple = root.getNextTuple();
 			if(tuple==null) {
@@ -88,14 +80,12 @@ public class ProjectionOperator extends Operator {
 	@Override
 	public void reset() {
 		root.reset();
-		//again not sure of this. need to check it. 
 	}
 
 	@Override
 	protected Map<String, Integer> getAttributeHashIndex() {
 		// TODO Auto-generated method stub
-		//System.out.println("wait....am i even reaching this point????");
-		//System.out.println(projectedAttributesHashIndex.toString());
+
 		return projectedAttributesHashIndex;
 	}
 

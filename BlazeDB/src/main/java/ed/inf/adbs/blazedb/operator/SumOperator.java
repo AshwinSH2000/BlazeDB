@@ -49,7 +49,6 @@ public class SumOperator extends Operator{
 			bufferTuples.add(tuple);
 		}
 		
-		System.out.println("INSIDE SUM OPERATOR....1");
 		
 		//if there are no tuples obtained from the child operator, return immediately and avoid all unnecessary computations below
 		if(bufferTuples.size()==0){
@@ -58,7 +57,6 @@ public class SumOperator extends Operator{
 		
 		if(selectClause.toString().toLowerCase().contains("sum") && groupByClause == null) {
 			
-			System.out.println("INSIDE SUM OPERATOR....2");
 			
 			Tuple tupleToReturn = new Tuple();
 			//need to set just a tuple
@@ -72,10 +70,8 @@ public class SumOperator extends Operator{
 					Expression exp = ((SelectItem)sumItem).getExpression();
 					if (exp instanceof Function && exp.toString().toLowerCase().contains("sum")) {
                         Function function = (Function) exp;
-                        System.out.println("SUMOP: printiing the function "+exp.toString());
 
                         Expression parameters = function.getParameters();
-                        System.out.println("SUMOP: printiing outside the loop "+parameters.toString());
                         
                         if(!parameters.toString().contains("*")) {
                         	//doesnt contain * that means its either sum(number) or sum(column)
@@ -84,7 +80,6 @@ public class SumOperator extends Operator{
                         	if(attributeHashIndex.containsKey(parameters.toString().toLowerCase())) {
                         		for( Tuple tempTuple : bufferTuples) {
                         			sum += tempTuple.get(attributeHashIndex.get(parameters.toString().toLowerCase()));
-                            		System.out.println("DEBUGGING....1: sum = "+sum);
 
                         		}
                         	}
@@ -93,7 +88,6 @@ public class SumOperator extends Operator{
                         	else {
                         		evalSumExpr = Integer.parseInt(parameters.toString());
                                 sum = bufferTuples.size()*evalSumExpr;
-                        		System.out.println("DEBUGGING....2: sum = "+sum);
 
                         	}
                         	
@@ -118,15 +112,12 @@ public class SumOperator extends Operator{
                             			number = Integer.parseInt(individualNums);
                             		}
                             		ans = ans * number;
-                            		System.out.println("DEBUGGING....3: answer = "+ans);
                             	}
                         		sum = sum + ans;
-                        		System.out.println("DEBUGGING....4: sum = "+sum);
 
                         	}
                         		
                         }
-                        System.out.println("SUMOP: printing the result = "+sum);
                         //calculate the sum based on the number of tuples in bufferTuple
 					}
 					else
@@ -138,17 +129,14 @@ public class SumOperator extends Operator{
 				//illi tuple ge add maadbodu
 				tupleToReturn.add(sum);
 				projectedAttributeHashIndex.put(sumItem.toString().toLowerCase(), count++);
-				System.out.println(projectedAttributeHashIndex.toString()+" is the 39845793 93847593 9847593 9384753 939 39847");
 			}
 			outputTuples.add(tupleToReturn);
-			System.out.println("SUMOP: the output of the expression is "+outputTuples.toString());
 			
 		}
 		
 		
 		if( !selectClause.toString().toLowerCase().contains("sum") && groupByClause!=null ) {
 			
-			System.out.println("INSIDE SUM OPERATOR....3");
 			
 			//need to just group by. here need to check if the condition in select clause matches the condition in group by clause.
 			//the clause present in select needs to be present in group by too... assuming this and proceeding. 
@@ -160,7 +148,6 @@ public class SumOperator extends Operator{
 					//bug is here
 					
 					if(selectClause.toString().toLowerCase().contains(groupByObj.toString().toLowerCase())) {
-						System.out.println("SumOperator x: The value of group by obj is here: "+groupByObj.toString() );
 						tempTuple.add(   scannedTuple.get(   attributeHashIndex.get(   groupByObj.toString().toLowerCase()  )    )    );
 					}
 					
@@ -176,7 +163,6 @@ public class SumOperator extends Operator{
 				}
 			}
 			
-			System.out.println("This is the aHI after putting the necessary typles: "+ projectedAttributeHashIndex.toString());
 			
 			//copy uniqueTuples to outputTuples
 			for (Tuple temp : uniqueTuples) {
@@ -186,7 +172,6 @@ public class SumOperator extends Operator{
 		
 		if(selectClause.toString().toLowerCase().contains("sum") && groupByClause!=null) {
 			
-			System.out.println("INSIDE SUM OPERATOR....4");
 			HashMap<Tuple, Tuple> uniqueTuples = new HashMap<Tuple, Tuple>();
 
 		
@@ -196,7 +181,6 @@ public class SumOperator extends Operator{
 				
 				for(Object obj : groupByClause) {
 					tupleHashKey.add(scannedTuple.get(attributeHashIndex.get(obj.toString().toLowerCase())));
-					System.out.println("SUM OPERATOR: "+tupleHashKey.toString());
 				}
 				Tuple tupleHashValue = new Tuple();
 				int colValue=0;
@@ -207,7 +191,6 @@ public class SumOperator extends Operator{
 					Tuple presentTuple = uniqueTuples.get(tupleHashKey);
 //					System.out.println("The tuple that was already PRESENT INSIDE UNIQIE TUPLES IS................."+presentTuple.toString());
 					int presentValue = 0;
-					System.out.println("Its present");
 					for (SelectItem<?> item : selectClause) {
 						Expression exp = ((SelectItem)item).getExpression();
 						if(exp instanceof Function) {
@@ -222,7 +205,6 @@ public class SumOperator extends Operator{
 		                    	}catch(Exception e) {
 		                    		colValue = scannedTuple.get(attributeHashIndex.get(stringParameters[0].toLowerCase()));
 		                    	}
-		                    	System.out.println("The COLUMN VALUE OF THIS SINGLE VALUE INSIDE SUM IS "+colValue);
 		                    	
 		                    	
 		                    	presentValue = presentTuple.get(projectedAttributeHashIndex.get(exp.toString().toLowerCase()));
@@ -242,7 +224,6 @@ public class SumOperator extends Operator{
 		                    		}
 		                    	}
 								
-		                    	System.out.println("The product of the terms inside the column is "+product);
 		                    	presentValue = presentTuple.get(projectedAttributeHashIndex.get(exp.toString().toLowerCase()));
 		                    	tupleHashValue.add(product+presentValue);
 							}
@@ -259,12 +240,10 @@ public class SumOperator extends Operator{
 						
 					}
 					uniqueTuples.put(tupleHashKey, tupleHashValue);
-					System.out.println("One of the tuples that i just put in is..." + uniqueTuples.toString());
 
 				}
 				else
 				{
-					System.out.println("its not present");
 					int counter=0;
 					//iterate over the select clause and select the columns to be put into it
 					for (SelectItem<?> item: selectClause) {
@@ -294,7 +273,6 @@ public class SumOperator extends Operator{
 		                    	}catch(Exception e) {
 		                    		colValue = scannedTuple.get(attributeHashIndex.get(stringParameters[0].toLowerCase()));
 		                    	}
-		                    	System.out.println("The COLUMN VALUE OF THIS SINGLE VALUE INSIDE SUM IS "+colValue);
 		                    	tupleHashValue.add(colValue);
 		                    	
 		                    	projectedAttributeHashIndex.putIfAbsent(  exp.toString().toLowerCase(), counter++  );
@@ -316,7 +294,6 @@ public class SumOperator extends Operator{
 		                    			product = product * colValue;
 		                    		}
 		                    	}
-		                    	System.out.println("The product of the terms inside the column is "+product);
 		                    	tupleHashValue.add(product);
 		                    	projectedAttributeHashIndex.putIfAbsent(  exp.toString().toLowerCase(), counter++  );
 
@@ -337,12 +314,10 @@ public class SumOperator extends Operator{
 						}
 					}
 					uniqueTuples.put(tupleHashKey, tupleHashValue);
-					System.out.println("One of the tuples that i just put in is..." + uniqueTuples.toString());
 				
 				}
 
 			}
-			System.out.println("projectedaHI is..." + projectedAttributeHashIndex.toString());
 
 			
 			for (Map.Entry<Tuple, Tuple> entry : uniqueTuples.entrySet()) {
@@ -351,7 +326,6 @@ public class SumOperator extends Operator{
 			}
 		}
 		
-		System.out.println("INSIDE SUM OPERATOR....5");
 		
 	}
 	

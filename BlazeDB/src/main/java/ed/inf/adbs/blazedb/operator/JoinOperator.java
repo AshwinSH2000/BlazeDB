@@ -39,7 +39,7 @@ public class JoinOperator extends Operator{
 		
 	}
 	
-	//function overloading. just differs by a argument passed from the above method. 
+	//constructor overloading. just differs by a argument passed from the above method. 
 	public JoinOperator(Operator lChild, Operator rChild, List<Expression> tablesJoinClause, Map<String, Integer> leftAttributeHashIndex, Map<String, Integer> rightAttributeHashIndex) {
 		this.leftChild = lChild;
 		this.rightChild = rChild;
@@ -54,12 +54,6 @@ public class JoinOperator extends Operator{
 	@Override
 	public Tuple getNextTuple() {
 		
-		//begin going through the left table in outer loop. 
-		//in the inside loop, iterate over the right table/child
-		
-		//not sure about while loop.. but lets see
-		
-		//have to add the equi join condition here itself. 
 		
 		while(leftTuple!=null) {
 			if(rightTuple==null) {
@@ -72,10 +66,6 @@ public class JoinOperator extends Operator{
 				if(joinExpression==null) {
 					
 					Tuple newlyJoinedTuple = concatenateTuples(leftTuple, rightTuple);
-					System.out.println("JOINOP: Left Tuple: ................. "+leftTuple.toString());
-					System.out.println("JOINOP: Right Tuple: ................. "+rightTuple.toString());
-
-					System.out.println("JOINOP: Concatenated Tuple: ................. "+newlyJoinedTuple.toString());
 
 					rightTuple = rightChild.getNextTuple();
 					return newlyJoinedTuple;	
@@ -90,7 +80,6 @@ public class JoinOperator extends Operator{
 					if(joinExpression.size()==1) {
 						//that means there is just one condition to join the table
 					
-						System.out.println("This is where the error occured: "+joinExpression.toString());
 						ComparisonOperator evalExp = (ComparisonOperator) joinExpression.get(0) ;
 					
 						String leftExpressionString = evalExp.getLeftExpression().toString();
@@ -117,17 +106,13 @@ public class JoinOperator extends Operator{
 					//hence here, i need not check if the conditions are matching to the tables. 
 					//only thing i need to check is if the order of conditions in join matches the tables 
 					
-						System.out.println(leftAttributeHashIndex.toString());
-						System.out.println(rightAttributeHashIndex.toString());
-						System.out.println(joinExpression.toString());
+
 					
 					//assume the order matches. so the lefttuple belongs to leftAttributeHashIndex and so on.
 					
 
-						System.out.println("JOINOP: kjsdhksjfhfshdkfvsf + leftcol = "+leftCol);
-						System.out.println("JOINOP: kjsdhksjfhfshdkfvsf + rightCol = "+rightCol);
+						
 
-					//rightTuple = rightChild.getNextTuple();
 					}
 					else {
 						//this means there will be more than 1 clause to join two tables
@@ -161,10 +146,8 @@ public class JoinOperator extends Operator{
 			}
 			
 			rightChild.reset();
-			System.out.println("JOINOP: Called the right reset  broooooooooooooooooooooooooooo");
 
 			leftTuple = leftChild.getNextTuple();
-			System.out.println("JOINOP: Called the leftnet tuple broooooooooooooooooooooooooooo");
 
 			
 		}
@@ -200,22 +183,7 @@ public class JoinOperator extends Operator{
 		joinedTuple.addTuple(rTup);
 		
 		return joinedTuple;
-		
-		//created a list of integer before hand but figured out creating a tuple was easier! 
-		//also loops present to display the values. 
-		
-//		List<Integer> joinedTuple = new ArrayList<>(lTup.getTupleValues());
-//		System.out.print("Left Tuple = ");
-//		for (Integer x: joinedTuple) {
-//			System.out.print(x + " , ");
-//		}	
-//		joinedTuple.addAll(rTup.getTupleValues());
-//		System.out.println(" ");
-//		System.out.print("Right Tuple = ");
-//		for (Integer y: joinedTuple) {
-//			System.out.print(y + " , ");
-//		}
-			
+					
 		
 	}
 

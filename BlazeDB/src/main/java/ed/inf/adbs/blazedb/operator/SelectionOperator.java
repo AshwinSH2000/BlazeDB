@@ -34,17 +34,9 @@ public class SelectionOperator extends Operator{
 			}
 			EvaluateSelection evalSelection = new EvaluateSelection(attributeHashIndex,tuple);
 
-//			
-//			if (whereCondition instanceof BinaryExpression) {
-//			    System.out.println("WHERE condition is a BinaryExpression!");
-//			} else {
-//			    System.out.println("WHERE condition is: " + whereCondition.getClass().getSimpleName());
-//			}
-//			
 			
 			
 			if(evalSelection.evaluate(whereCondition)) {
-//				System.out.println(tuple + "is one of the tuple to satisfy the where clause");
 				return tuple;
 			}
 		}
@@ -52,13 +44,7 @@ public class SelectionOperator extends Operator{
 
 	@Override
 	public void reset() {
-		//this is the same code as scanoperator's reset function. change if necessary. 
-//		try {
-//			reader.close();
-//			openFile(); // Reopen the file to reset the iterator
-//		} catch (IOException e) {
-//			e.printStackTrace();
-//		}
+
 		
 		//is it required to call the close function explicitly or can i just call root.reset(). need to check
 		//will there be any nonsense happening if i call this inside selectionoperator?

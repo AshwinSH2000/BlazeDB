@@ -44,11 +44,6 @@ public class QueryPlan {
 		DatabaseCatalog catalog = DatabaseCatalog.getInstance();
 		
 		
-		
-		// IMPORTANT! NOW YOU NEED TO CHECK THE NUMBER OF TABLES BEFORE YOU ASSIGN THE ROOT AS SCANOPERATOR. 
-		// IN CASE, THERE IS JUST A TABLE, PROCEED. 
-		// ELSE, YOU NEED TO CREATE TWO SEPARATE INSTANCES OF SCANOPERATORS.. NEED TO CHECK THE FROM IN THIS STEP(thatsthe soln)
-		
 		if(JOIN==null) {
 			
 			//this ensures that there is only 1 table because fromItem picks up only one table
@@ -59,7 +54,6 @@ public class QueryPlan {
 			
 			//now i am adding the from and where but i need to add the join clause sometimes. 
 			if(WHERE!=null) {
-				System.out.println("QUERYPLAN: Going to wrap selection operator");
 				root = new SelectionOperator(root, WHERE, attributeHashIndex);
 			}
 			
@@ -68,7 +62,6 @@ public class QueryPlan {
 				
 				
 				if(!SELECT.toString().toLowerCase().contains("sum") && GROUPBY == null) {
-					System.out.println("QUERYPLAN: Detected projection criteria...so root is projectionoperator");
 					root = new ProjectionOperator(root, SELECT, attributeHashIndex);
 					//pulling the new attribute hash index containing the projected columns only
 					attributeHashIndex = root.getAttributeHashIndex();
@@ -76,25 +69,19 @@ public class QueryPlan {
 				
 				else
 				{
-					System.out.println("QUERYPLAN: Inside the if block to check for projection but this one eithrt has sum, group by or both");
 					root = new SumOperator(root, GROUPBY, SELECT, attributeHashIndex);
 					attributeHashIndex = root.getAttributeHashIndex();
-					System.out.println("QUERYPLAN: aHI after sum only aggregates without the group by clause is..."+attributeHashIndex.toString());
 				}
 				
 			}
 			
 			if(DISTINCT!=null) {
-				System.out.println("QUERYPLAN: performing duplicate elimination....dishkyuun dishkyuunn...");
 				root = new DuplicateEliminationOperator(root);
 			}
 			
 			if(ORDERBY!=null) {
-				System.out.println("QUERYPLAN: Order by detectd. hence sorting the columns now");
 				root = new SortOperator(root, ORDERBY, attributeHashIndex);	
 			}
-			System.out.println("QUERYPLAN: This is just before returning the main root");
-			System.out.println(attributeHashIndex.toString());
 
 			return root;
 			
@@ -104,11 +91,7 @@ public class QueryPlan {
 			Operator leftChild = new ScanOperator(FROM.toString());
 			Map<String, Integer> attributeHashIndex_lChild = leftChild.getAttributeHashIndex();
 			String leftTableName = FROM.toString();
-			
-			
-			//Expression exp = null;
 
-			System.out.println("QUERYPLAN: "+FROM.toString()+" lallalla "+JOIN.toString());
 			
 			//split the where clause	
 			
@@ -121,9 +104,7 @@ public class QueryPlan {
 				
 				List<Expression> listTableOneClause=conditionForTable(listExp, leftTableName);
 				if(!listTableOneClause.isEmpty()) {
-					System.out.println("QUERYPLAN: hi hello namaste.............found a where clause for table..........." + listTableOneClause.toString());
 					Expression tableOneClause = combineWithAnd(listTableOneClause);
-					System.out.println("QUERYPLAN: hi hello namaste.............joined expr for above clause..........." + tableOneClause.toString());
 					leftChild = new SelectionOperator(leftChild, tableOneClause, attributeHashIndex_lChild);
 
 				}
@@ -153,12 +134,9 @@ public class QueryPlan {
 				if(!(WHERE==null)) {
 					
 					List<Expression> listTableTwoClause=conditionForTable(listExp, join.toString());
-					System.out.println("QUERYPLAN: I am printing the value of temp2 wen there is no hwere claise: "+listTableTwoClause.toString());
 					if(!listTableTwoClause.isEmpty())
 					{
-						System.out.println("QUERYPLAN: hi hello namaste.............found a where clause for table..........." + listTableTwoClause.toString());
 						Expression tableTwoClause = combineWithAnd(listTableTwoClause);
-						System.out.println("QUERYPLAN: hi hello namaste.............joined expr for above clause..........." + tableTwoClause.toString());
 
 						rightChild = new SelectionOperator(rightChild, tableTwoClause, attributeHashIndex_rChild);	
 					}
@@ -173,7 +151,6 @@ public class QueryPlan {
 					if(!listTablesJoinClause.isEmpty()) {
 						
 						Expression tablesJoinClause =  combineWithAnd(listTablesJoinClause);
-						System.out.println("QUERYPLAN_x: Printing the single join clause joined with AND operator...lets see the op   "+ tablesJoinClause.toString());
 						//leftChild = new JoinOperator(leftChild, rightChild, tablesJoinClause, attributeHashIndex_lChild, attributeHashIndex_rChild );
 						leftChild = new JoinOperator(leftChild, rightChild, listTablesJoinClause, attributeHashIndex_lChild, attributeHashIndex_rChild );
 
@@ -181,7 +158,6 @@ public class QueryPlan {
 				
 					else {
 						//System.out.println("Joining the two tables with cross product because of no where join clause present. #################### ");
-						System.out.println("11111111111111111111111111111"+leftTableName.toString()+join.toString());
 						leftChild = new JoinOperator(leftChild, rightChild);
 					}
 				}	
@@ -192,9 +168,6 @@ public class QueryPlan {
 				
 				int offset=attributeHashIndex_lChild.size();
 				
-				System.out.println("QUERYPLAN: before updation lahi is "+attributeHashIndex_lChild.toString());
-				System.out.println("QUERYPLAN: before updation rahi is "+attributeHashIndex_rChild.toString());
-
 				//this is to ensure that for any subsequent joins, the updated attHashIndex is sent
 				for (Map.Entry<String, Integer> entry : attributeHashIndex_rChild.entrySet()) {
 				    //String newKey = join.getRightItem().toString() + "." + entry.getKey(); // Prefix with table name
@@ -202,73 +175,23 @@ public class QueryPlan {
 						attributeHashIndex_lChild.put(entry.getKey(), entry.getValue() + offset);
 				}
 				leftTableName = leftTableName.concat(" join "+join.toString());
-				
-				
-				System.out.println("QUERYPLAN: after updation lahi is "+attributeHashIndex_lChild.toString());
-				System.out.println("QUERYPLAN: after updation rahi is "+attributeHashIndex_rChild.toString());
-
-				//seems like the queries consist of only simpleJoin (mostly) and InnerJoin. sp going ahead with them for timebeing. 
-//				System.out.println("displayng the rightitem: "+join.getRightItem().toString());
-//				System.out.println("displaying the isjoin iscross: "+join.isCross() );
-//				System.out.println("displaying the isjoin issimple: "+join.isSimple() );
-//				System.out.println("displaying the isjoin isapply: "+join.isApply() );
-//				System.out.println("displaying the isjoin isfull: "+join.isFull() );
-//				System.out.println("displaying the isjoin isinner: "+join.isInner() );
-//				System.out.println("displaying the isjoin isinnerjoin: "+join.isInnerJoin() );
-//				System.out.println("displaying the isjoin isleft: "+join.isLeft() );
-//				System.out.println("displaying the isjoin isnatural: "+join.isNatural() );
-//				System.out.println("displaying the isjoin isouter: "+join.isOuter() );
-//				System.out.println("displaying the isjoin isright: "+join.isRight() );
-//				System.out.println("displaying the isjoin issemi: "+join.isSemi() );
-//				System.out.println("displaying the isjoin isstraight: "+join.isStraight() );
-//				System.out.println("displaying the isjoin iswindow: "+join.isWindowJoin() );
-//				System.out.println("displaying the isjoin isglobal: "+join.isGlobal() );
-				
-				//if there are where clause for a single table, filter that before hand and then give it to join.
-				//if there are where clause for joining the tables, then i think it is better to iterate over and then figure out which
-				//tuples to join based on the condition after checking each tuple.
-
-				
-				//exp = join.getOnExpression();
-				
-
+			
 			} //join loop ends
-			
-			//initially I added an if clause for if(WHERE==null) but realised its not reqd. despite presence/absense of where clause, i need tohave a join operator because JOIN clause is not null
-//			Operator root = new JoinOperator(leftChild, rightChild, exp);
-			
-			//this wont work directly, needto write a function to concatenate the hasindex of two child tables.  
-			//write this function in the join operator. 			
-			
-//			if(WHERE!=null) {
-//				System.out.println("Going to wrap selection operator to the join operator");
-//				//need to combine leftand right attributeHashJoins to use in where clause. 
-//				for(String key: attributeHashIndex_lChild.keySet()) {
-//					root.addMapValue(FROM.toString()+"."+key, attributeHashIndex_lChild.get(key));
-//				}
-//				for(String key: attributeHashIndex_rChild.keySet()) {
-//					root.addMapValue(.toString()+"."+key, attributeHashIndex_lChild.get(key));
-//				}
-//				root = new SelectionOperator(root, WHERE,  );
-//			}
+
 			
 			
-			
-			
+				
 			// sorting can be done here as well but it leads to larger tuples being compared which can reduce the speed
 			if(!SELECT.toString().contains("[*]")) {
 				if(!SELECT.toString().toLowerCase().contains("sum") && GROUPBY == null) {
-					System.out.println("QUERYPLAN: Detected projection criteria...so root is projectionoperator");
 					leftChild = new ProjectionOperator(leftChild, SELECT, attributeHashIndex_lChild);
 					//pulling the new attribute hash index containing the projected columns only
 					attributeHashIndex_lChild = leftChild.getAttributeHashIndex();
 				}
 				else
 				{
-					System.out.println("QUERYPLAN: JOIN is present...Inside the if block to check for projection but this one eithrt has sum, group by or both");
 					leftChild = new SumOperator(leftChild, GROUPBY, SELECT, attributeHashIndex_lChild);
 					attributeHashIndex_lChild = leftChild.getAttributeHashIndex();
-					System.out.println("QUERYPLAN: aHI after sum only aggregates without the group by clause is..."+attributeHashIndex_lChild.toString());
 				}
 				
 			}
@@ -276,13 +199,10 @@ public class QueryPlan {
 			
 			
 			if(DISTINCT!=null) {
-				System.out.println("QUERYPLAN: performing duplicate elimination....dishkyuun dishkyuunn...");
 				leftChild = new DuplicateEliminationOperator(leftChild);
 			}
 			
-			System.out.println("THIS IS BEFORE GOING TO ORDERBY... aHI is "+attributeHashIndex_lChild);
 			if(ORDERBY!=null) {
-				System.out.println("QUERYPLAN: Order by detectd. hence sorting the columns now");
 				leftChild = new SortOperator(leftChild, ORDERBY, attributeHashIndex_lChild);
 			}
 			return leftChild;
@@ -290,22 +210,11 @@ public class QueryPlan {
 		}
 		return null;
 		
-		
-		
-		//bug fixing attemtps
-//		System.out.println("select statement is "+ SELECT);
-//		System.out.println("Select contains * "+ SELECT.contains("*"));
-//		System.out.println("Select contains X "+ SELECT.contains("X"));
-//		System.out.println("Select contains Student.D "+ SELECT.toString().contains("Student.D"));		//true for q3
-//		System.out.println("Select contains String object s "+ SELECT.toString().contentEquals("[*]"));		 //yessss..working fine
-//		System.out.println("Select contains String object s "+ SELECT.toString().contains("[*]"));
-		
 	}
 	
 	
 	private static List<Expression> conditionsForTwoTables(List<Expression> listExp, String tableOne, String tableTwo){
 		
-		System.out.println("QUERYPLAN: ....inside conditionsForTwoTables function...checking if this is executinng");
 		List<Expression> returnClause = new ArrayList<>();
 		
 		for(Expression exp : listExp) {
@@ -346,15 +255,10 @@ public class QueryPlan {
 			//1. tbl1.col <OP> tbl2.col
 			//2. tbl2.col <OP> tbl1.col
 			
-			//for debugging
-//			System.out.println( e.getLeftExpression(). toString().toLowerCase().contains(tableOne.toLowerCase())   );
-//			System.out.println( e.getRightExpression().toString().toLowerCase().contains(tableTwo.toLowerCase())   );
-//			System.out.println( e.getLeftExpression(). toString().toLowerCase().contains(tableTwo.toLowerCase())   );
-//			System.out.println( e.getRightExpression().toString().toLowerCase().contains(tableOne.toLowerCase())   );
+
 			
 
 			if(tableOne.contains("join")) {
-				System.out.println("QUERYPLAN: yess it contains a join ed string class ....yes common ash2");
 				
 				String[] leftTableInJoinClause = e.getLeftExpression().toString().toLowerCase().split("\\."); //index 0 will be the name of the table that we wish to check
 				String[] rightTableInJoinClause = e.getRightExpression().toString().toLowerCase().split("\\.");
@@ -378,7 +282,6 @@ public class QueryPlan {
 						    &&
 							tableTwo.toLowerCase().contains(leftTableInJoinClause[0].toLowerCase())   ))
 					{
-						System.out.println("QUERYPLAN: Reordering clause 1");
 						returnClause.add(reorderClause(e));
 					}
 				}
@@ -399,7 +302,6 @@ public class QueryPlan {
 			)					
 
 			{
-				System.out.println("QUERYPLAN: .......Found a join condition for the tables: "+tableOne+" and "+tableTwo);
 				if(   e.getLeftExpression().toString().toLowerCase().contains(tableOne.toLowerCase())
 						&& e.getRightExpression().toString().toLowerCase().contains(tableTwo.toLowerCase())    ) 
 				{
@@ -409,7 +311,6 @@ public class QueryPlan {
 						&& e.getRightExpression().toString().toLowerCase().contains(tableOne.toLowerCase()) ) {
 					//split the clause. reorder it and join it
 					
-					System.out.println("QUERYPLAN: Reordering clause 2");
 					returnClause.add(reorderClause(e));
 				}
 			}
@@ -425,7 +326,6 @@ public class QueryPlan {
 	private static ComparisonOperator reorderClause(ComparisonOperator e) {
 		ComparisonOperator reversedClause = null;
 		
-		System.out.println("The original vlause received = "+e.toString());
 		Expression leftExp = e.getLeftExpression();
 		Expression rightExp = e.getRightExpression();
 		ComparisonOperator op = null;
@@ -453,8 +353,6 @@ public class QueryPlan {
 		op.setRightExpression(leftExp);
 		reversedClause = op;
 		
-		System.out.println("QUERYPLAN: Changing the order of the join condition as it was reversed before.. basically providing commutativity");
-		System.out.println("QUERYPLAN: The reordered clause is = "+op.toString());
 		return reversedClause;
 	}
 	
@@ -509,19 +407,12 @@ public class QueryPlan {
 				e = (NotEqualsTo) exp;
 			}
 			
-			//does this work? need to see
-			System.out.println("QUERYPLAN: printing leftExpression "+ e.getLeftExpression());
-			System.out.println("QUERYPLAN: priting right edpression "+ e.getRightExpression());
-			System.out.println("QUERYPLAN: prining tablename "+table);
-			System.out.println(e.getRightExpression() instanceof Column );
 				
 //				here i pass the entire list of where expr and also the table name
 //				if i find a clause associated with a table, i thought of returning it directly initially
 //				but there can be a case where two clauses are associated with a same table say A.a>5 and A.b<6
 //				So i feel I need to create an expression and then return it. 
 				
-			System.out.println("QUERY PLAN: is integer "+e.getLeftExpression().toString()+isInteger(e.getLeftExpression()));
-			System.out.println("QUERY PLAN: is integer "+e.getRightExpression().toString()+isInteger(e.getLeftExpression()));
 
 			if //this checks if the where clause for the table is a single table where clause or not
 			(		(e.getLeftExpression().toString().toLowerCase().contains(table.toLowerCase())  
@@ -537,7 +428,6 @@ public class QueryPlan {
 						
 			) 
 			{
-				System.out.println("\nQUERYPLAN: -----Single table");
 				returnClause.add(e);
 				
 					
@@ -559,7 +449,6 @@ public class QueryPlan {
 			
 		}
 		catch(NumberFormatException e) {
-			System.out.println("QUERYPLAN: NFException");
 			return false;
 		}
 	}

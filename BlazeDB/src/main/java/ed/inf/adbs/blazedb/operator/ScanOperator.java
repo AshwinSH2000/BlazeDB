@@ -29,15 +29,10 @@ public class ScanOperator extends Operator {
 
 		int index=0;
 		for(String x:  this.schema) {
-			//attributeHashIndex.put(tableName+"."+x, index++);
 			attributeHashIndex.put(x, index++);
 		}
 		
 		noOfTuples=0;
-		System.out.println("SCANOP: The attributeHashIndex for "+tableName+ "table is "+attributeHashIndex.toString());
-//		for(String x: this.schema) {
-//			System.out.println("Ashwishshshsh--------"+attributeHashIndex.values());
-//		}
 		openFile();
 	}
 	
@@ -67,13 +62,9 @@ public class ScanOperator extends Operator {
 				// Convert the CSV line into a list of integers (since all values are integers)
 				String[] values = currentLine.split(",");
 				Tuple tuple = new Tuple();
-				System.out.println();
 				for (String value : values) {
-					//       System.out.println("Ths is in getNextTuple function: " + value );
-					//System.out.print(value + "\t");
 					tuple.add(Integer.parseInt(value.trim()));
 				}
-				System.out.println();
 				noOfTuples++;
 				return tuple;
 			} else {

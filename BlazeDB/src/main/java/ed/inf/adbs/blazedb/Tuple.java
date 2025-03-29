@@ -18,7 +18,6 @@ public class Tuple {
 	
 	public void add(int value) {
 		x.add(value);
-		//System.out.println(value + " is added to the tuple");
 	}
 	
 	//a method to add the entire passed tuple into a current tuple 

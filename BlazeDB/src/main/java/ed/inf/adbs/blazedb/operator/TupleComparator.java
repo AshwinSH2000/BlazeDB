@@ -23,14 +23,6 @@ public class TupleComparator implements Comparator<Tuple> {
 		for (OrderByElement orderBy : orderByElements) {
             String columnName = orderBy.getExpression().toString().toLowerCase();
 
-            //int index = tuple1.getColumnIndex(columnName); 
-            //need to get atttributehashIndex
-            
-        	System.out.println("TUPL_COMP: raise ypur armsm up and singgg..om shanthi oommm 1 "+attributeHashIndex.keySet().toString());
-        	System.out.println("TUPL_COMP: raise ypur armsm up and singgg..om shanthi oommm 2 "+attributeHashIndex.values().toString());
-        	System.out.println(orderBy.getExpression().toString().toLowerCase()+" is "+attributeHashIndex.get(orderBy.getExpression().toString().toLowerCase()));
-        	System.out.println("TUPL_COMP: raise ypur armsm up and singgg..om shanthi oommm 3 "+columnName.toLowerCase());
-
             int index = attributeHashIndex.get(columnName.toLowerCase());
             int value1 = tuple1.get(index);
             int value2 = tuple2.get(index);

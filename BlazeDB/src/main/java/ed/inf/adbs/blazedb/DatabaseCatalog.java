@@ -27,14 +27,13 @@ public class DatabaseCatalog {
 	public static DatabaseCatalog getInstance() {
 		if(instance==null) {
 			instance = new DatabaseCatalog();
-			System.out.println("created a new instance");
 		}
 		return instance;
 	}
 	
 	/*
 	 *  only path given in input = samples/db
-	 *  schema path = samples/db/schema.txt has schema
+	 *  schema path = samples/db/schema.txt 
 	 *  tables path = samples/db/data/<name>.csv
 	 */
 	
@@ -78,7 +77,6 @@ public class DatabaseCatalog {
 	//function to check the values of the hash map. this is only for debugging
 	public void displayCatalogHash() {
 		for(Map.Entry<String, TableInfo> map : catalogHash.entrySet()) {
-			System.out.println(map.getKey() + " has a value " + map.getValue());
 			
 		}
 	}
