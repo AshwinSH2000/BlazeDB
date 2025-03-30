@@ -23,7 +23,8 @@ import net.sf.jsqlparser.statement.select.SelectItem;
  * If there are more than 1 numbers/columns inside SUM, I iterate over them using a loop to first multiply them and later sum everything. 
  * 
  * In the 2nd case, I iterate over all the Attributes mentioned in GROUP BY clause. Then pick up all the attributes mentioned in the Select clause
- * (as select can contain the subset of GROUP BY)into a tuple and later add this tuple into a HashMap.  
+ * (as select can contain the subset of GROUP BY)into a tuple and later add this tuple into a HashMap
+ * (HashMap's key = all values of GROUPBY attributes of tuple, HashMap's value = The values of columns to be projected after GROUPBY)
  * This helps to avoid duplicates and gives only those attributes that were asked to be projected after group by.
  * 
  * In the 3rd case, again I divide them into two 1. If the tuple is present in the HashMap(as a key) of group by elements
@@ -229,7 +230,7 @@ public class SumOperator extends Operator{
 	/*
 	 * Method to handle queries having both SUM() and GROUP BY clauses.
 	 * This feels like a large monolithic block of code but I kept it as is because it encapsulates distinct logic of handling both SUM & GROUPBY
-	 * For this submission, I prioritized stability of this code block over further refactoring
+	 * For this submission, I prioritized stability of this code block over further refactoring.
 	 */
 	private void sumAndGroupBy(){
 		
@@ -367,7 +368,11 @@ public class SumOperator extends Operator{
 
 	
 	
-
+	/*
+	 * Method that returns the tuples one by one after GROUPING and/or SUMMING over specified attributes.
+	 * Since SumOperator is a blocking operator, it does all the calculations beforehand and only returns the tuples one by one in this method
+	 * @return (tuple) The tuple in the sequential order of the table.
+	 */
 	@Override
 	public Tuple getNextTuple() {
 		
@@ -377,17 +382,29 @@ public class SumOperator extends Operator{
         return null; 
 	}
 
+	
+	/*
+	 * Method used to reset the state of the operator and ask it to return tuples from the very beginning. 
+	 */
 	@Override
 	public void reset() {
 		root.reset();
 	}
 
+	/*
+	 * getter function to return the hash index (schema of the table after projection). 
+	 * @return projectedAttributeHashIndex HashMap mapping table attributes to their corresponding integer position values after projection
+	 */
 	@Override
 	protected Map<String, Integer> getAttributeHashIndex() {
 		return this.projectedAttributeHashIndex;
 	}
 
 	
+	/*
+	 * Getter method to return the Name of the table
+	 * @return (String) returns the name of the table that is used passed to the child operator
+	 */
 	@Override
 	protected String getTableName() {
 		return root.getTableName();

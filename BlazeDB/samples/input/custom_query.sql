@@ -1,4 +1,5 @@
-SELECT * FROM Student, Course WHERE Student.C < Course.E ORDER by Student.a, Course.f;
+SELECT * FROM Student WHERE 4=Student.A;
+--SELECT * FROM Student, Course WHERE Student.C < Course.E ORDER by Student.a, Course.f;
 --SELECT * FROM Student, Course;
 --SELECT ENROLLED.H FROM STUDENT, ENROLLED, COURSE GROUP BY STUDENT.A, ENROLLED.H, COURSE.F order by ENROLLED.H;
 --SELECT COURSE.F, SUM(1) FROM STUDENT, ENROLLED, COURSE GROUP BY STUDENT.A, ENROLLED.H, COURSE.F order by COURSE.F;

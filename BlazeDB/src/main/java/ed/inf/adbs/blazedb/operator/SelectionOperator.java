@@ -51,7 +51,6 @@ public class SelectionOperator extends Operator{
 	
 	/*
 	 * Method used to reset the state of the operator and ask it to return tuples from the very beginning. 
-	 * Closing and reopening the file sets it to read it from the beginning
 	 */
 	@Override
 	public void reset() {
