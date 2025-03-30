@@ -66,7 +66,7 @@ public class QueryPlan {
 
 		DatabaseCatalog catalog = DatabaseCatalog.getInstance();
 
-		if (SELECT.toString().toLowerCase().contains("sum") && checkForTables(SELECT, JOIN, FROM)) {
+		if (SELECT.toString().toLowerCase().contains("sum") && checkForTables(SELECT, JOIN, FROM) && GROUPBY==null) {
 			List<String> combinedTableNames = getTableForSum(FROM, JOIN);
 			Operator root = new CountRowsOperator(SELECT, combinedTableNames);
 			return root;
