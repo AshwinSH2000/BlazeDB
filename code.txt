@@ -1,0 +1,2297 @@
+package ed.inf.adbs.blazedb;
+
+import java.io.FileReader;
+import java.io.FileWriter;
+import java.io.BufferedWriter;
+import java.io.IOException;
+import java.util.List;
+import net.sf.jsqlparser.expression.Expression;
+import net.sf.jsqlparser.expression.operators.relational.ExpressionList;
+import net.sf.jsqlparser.parser.CCJSqlParserUtil;
+import net.sf.jsqlparser.statement.Statement;
+import net.sf.jsqlparser.statement.select.Distinct;
+import net.sf.jsqlparser.statement.select.FromItem;
+import net.sf.jsqlparser.statement.select.Join;
+import net.sf.jsqlparser.statement.select.OrderByElement;
+import net.sf.jsqlparser.statement.select.Select;
+import net.sf.jsqlparser.statement.select.SelectItem;
+import ed.inf.adbs.blazedb.operator.Operator;
+import ed.inf.adbs.blazedb.operator.QueryPlan;
+
+/**
+ * Lightweight in-memory database system.
+ *
+ * Feel free to modify/move the provided functions. However, you must keep
+ * the existing command-line interface, which consists of three arguments.
+ *
+ */
+public class BlazeDB {
+
+	/**
+	 * This is the beginning of the program execution.
+	 *
+	 * @param args The command line input that contains 1) path for data & schema, 2) input SQL query, 3) name of the output file
+	 */
+	public static void main(String[] args) {
+
+		//This if block checks for the number of arguments passed from command line. It needs to be 3. 
+		if (args.length != 3) {
+			System.err.println("Usage: BlazeDB database_dir input_file output_file");
+			return;
+		}
+		
+		//Storing the command line arguments in their respective variables
+		String databaseDir = args[0];
+		String inputFile = args[1];
+		String outputFile = args[2];
+
+		//Creating the database catalog which consists of details about all the tables and schema. 
+		DatabaseCatalog dbc = DatabaseCatalog.getInstance();
+		
+		//Loading the database catalog with the contents present in samples/db folder (in this case) or any folder specified during runtime. 
+		dbc.loadDetails(databaseDir);
+		
+		//Parsing the input SQL file and writing to the output. 
+		parseQuery(inputFile, outputFile);
+
+	}
+
+	/**
+	 * JSQLParser method. Reads SQL statement from a string and stores them in separate variables
+	 * 
+	 * @param fileName The name of the file that contains the SQL query to be parsed 
+	 * @param outputFile The name of the file where the result will be written.
+	 */
+
+	public static void parseQuery(String fileName, String outputFile) {
+		try {
+			Statement statement = CCJSqlParserUtil.parse(new FileReader(fileName));
+			if (statement != null) {
+
+				//Creating necessary variables to hold the parsed and broken down SQL commands
+				List<SelectItem<?>> SELECT;
+				Distinct DISTINCT;	
+				List<OrderByElement> ORDERBY;
+				ExpressionList GROUPBY;
+				Expression WHERE;
+				List<Join> JOIN;
+				FromItem FROM;
+				Select select = (Select) statement;
+
+				//Parsing and extracting all the part of the SQL query
+				SELECT=select.getPlainSelect().getSelectItems();
+				FROM=select.getPlainSelect().getFromItem();
+				JOIN=select.getPlainSelect().getJoins();
+				WHERE=select.getPlainSelect().getWhere();
+				ORDERBY=select.getPlainSelect().getOrderByElements();
+				DISTINCT=select.getPlainSelect().getDistinct();
+				
+				//Checking for null is essential as getGroupByExpressionList raises exception when getGroupBy returns null
+				if(select.getPlainSelect().getGroupBy()==null) 
+					GROUPBY = null;
+				else
+					GROUPBY=select.getPlainSelect().getGroupBy().getGroupByExpressionList();
+				
+				//Creating a root and passing all the parsed clauses to construct the root operator. 
+				Operator root = QueryPlan.buildQueryPlan(SELECT, DISTINCT, ORDERBY, GROUPBY, WHERE, JOIN, FROM);
+				executeQuery(root,outputFile);
+
+			}
+		} catch (Exception e) {
+			//Catch block to hold any exception that occurred during the parsing of the input SQL file
+			System.err.println("Exception occurred during parsing");
+			e.printStackTrace();
+		}
+	}
+
+	/**
+	 * Executes the provided query plan by repeatedly calling `getNextTuple()`
+	 * on the root object of the operator tree. Writes the result to `outputFile`.
+	 *
+	 * @param root The root operator of the operator tree (assumed to be non-null).
+	 * @param outputFile The name of the file where the result will be written.
+	 */
+	public static void executeQuery(Operator root, String outputFile) {
+		try {
+			// Create a BufferedWriter
+			BufferedWriter writer = new BufferedWriter(new FileWriter(outputFile));
+
+			// Iterate over the tuples produced by root
+			Tuple tuple = root.getNextTuple();
+			while (tuple != null) {
+				writer.write(tuple.toString());
+				writer.newLine();
+				tuple = root.getNextTuple();
+			}
+
+			// Close the writer
+			writer.close();
+		}
+		catch (IOException e) {
+			e.printStackTrace();
+		}
+	}
+}
+package ed.inf.adbs.blazedb;
+
+import java.io.BufferedReader;
+import java.io.FileNotFoundException;
+import java.io.FileReader;
+import java.io.IOException;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+
+/*
+ * This class contains information about tables loaded into the database and its details such as path and attributes
+ * 
+ */
+public class DatabaseCatalog {
+	
+	//static makes the entire program to have only one instance of databasecCatalog. 
+	private static DatabaseCatalog instance;
+	private Map<String, TableInfo> catalogHash;
+	
+	//Private constructor that can only be called by this class
+	private DatabaseCatalog() {
+		catalogHash = new HashMap<String, TableInfo>();
+	}
+	
+	//The below function to create the instance of databaseCatalog. 
+	//It is not included in the constructor as it is best created only when there is need for it. 
+	public static DatabaseCatalog getInstance() {
+		if(instance==null) {
+			instance = new DatabaseCatalog();
+		}
+		return instance;
+	}
+
+	
+	/*
+	 * This method visits the path given during the input and 
+	 * loads the schema, all the tables and its attributes into the database catalog. 
+	 * 
+	 * @param path This is the main path given in command line input which consists of schema and all the tables
+	 */
+	public void loadDetails(String path) {
+		
+		//path will have "samples/db" because that was passed from the main/initial execution
+		String schemaFilePath = path + "/schema.txt";
+        try (BufferedReader br = new BufferedReader(new FileReader(schemaFilePath))) {
+        	String line;
+        	while((line=br.readLine())!=null) {
+        		
+        		//Splitting by " " as it is mentioned in schema.txt. Hence the first element in the list will be tableName
+        		String[] cols = line.split(" ");
+        		String tableName = cols[0];
+        		
+        		List<String> tableAttributes = new ArrayList<>();
+        		int index=1;
+        		while(index < cols.length) {
+        			//Adding tableName.columnName into the catalog
+        			tableAttributes.add(tableName.toLowerCase()+"."+cols[index].toLowerCase());
+        			index++;
+        		}
+        		
+        		//Hard coded as it was mentioned that all the data will be present in the /data directory inside samples/db. 
+        		String tablePath = path + "/data/" + tableName + ".csv";
+        		
+        		//All three parameters are read. Now time to load the table metadata into the databaseCatalog
+        		catalogHash.put(tableName.toLowerCase(), new TableInfo(tableName,tableAttributes,tablePath));
+        	}
+        	
+        } catch (FileNotFoundException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		} catch (IOException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+		
+	}
+	
+	//Function to check the values of the hash map. This is only for debugging
+	public void displayCatalogHash() {
+		for(Map.Entry<String, TableInfo> map : catalogHash.entrySet()) {
+			System.out.println(map.toString());
+		}
+	}
+	
+	/*
+	 * @param name The name of the table whose information we want to access
+	 */
+	public TableInfo getTableInfo(String name) {
+		return catalogHash.get(name.toLowerCase());
+	}
+	
+	/*
+	 * @param name The name of the table whose schema we want to access
+	 */
+	public List<String> getTableSchema(String name){
+		if (catalogHash.containsKey(name.toLowerCase())) {
+			return catalogHash.get(name.toLowerCase()).attributes;
+		}
+		else
+			return null;
+	}
+	
+	/*
+	 * @param name The name of the table whose path we want to access
+	 */
+	public String getTableFilePath(String name) {
+		if(catalogHash.containsKey(name.toLowerCase())) {
+			return catalogHash.get(name.toLowerCase()).path;
+		}
+		else
+			return null;
+	}
+	
+	
+}
+package ed.inf.adbs.blazedb;
+
+import java.util.List;
+
+/*
+ * This is a class created to store the details of the tables. 
+ * A new object will be created for every table that is read from the schema.
+ * Each object will consist of tableName, the path and all the attributes. 
+ */
+public class TableInfo {
+	String tableName;
+	List <String> attributes;
+	String path;
+	
+	/*
+	 * This is a constructor that loads the object with the data that is read from schema.txt
+	 * 
+	 * @param tablename The name of the table read in the schema.txt file
+	 * @param attributes The list of attributes corresponding to the above table
+	 * @param path The file path where the table can be found	
+	 */
+	public TableInfo(String tablename, List<String> attributes, String path) {
+		this.tableName =  tablename;
+		this.attributes = attributes;
+		this.path = path;
+	}
+}
+package ed.inf.adbs.blazedb;
+
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
+import java.util.Objects;
+
+/**
+ * This class represents a tuple (which is list of integers) and all the methods associated with it
+ * A tuple class represents a row of data in the database
+ *
+ * Apart from the normal getters and setters, there are two methods - hashCode() and equals(). 
+ * These are used explicitly for comparing the tuples in some of the operators. 
+ */
+public class Tuple {
+	
+	List<Integer> x = new ArrayList<>();
+	
+	/*
+	 * A method to add an integer to a tuple
+	 * @param value The value that needs to be added into the tuple
+	 */
+	public void add(int value) {
+		x.add(value);
+	}
+	
+	/*
+	 * A method to add the integers present in the passed tuple to the referenced tuples. (Tuple concatenate operator)
+	 * @param passedTuple This is the tuple passed whose values need to be put into the referenced tuple. 
+	 */
+	public void addTuple(Tuple passedTuple) {
+		for (Integer number : passedTuple.x) {
+			x.add(number);
+		}
+	}
+	
+	/*
+	 * This method updates one of the integers present inside the tuple(present at index 'pos') with a new value(num).
+	 *  
+	 * @param pos The position of the number to be replaced
+	 * @param num The number which needs to replace the old number at 'pos'
+	 */
+	public void updateTuple(int pos, int num) {
+		x.set(pos, num);
+	}
+
+	/*
+	 * A custom toString method to print the tuple values separated by comma.
+	 * Used just for debugging. 
+	 */
+	@Override
+	public String toString() {
+		String rowData="";
+		for(int i : x) {
+			if(rowData=="") {
+				rowData=rowData+i;
+			}
+			else{
+				rowData=rowData+","+i;
+			}
+		}
+		
+		return rowData;
+	}
+
+	/*
+	 * Method to return the number present at the index 'pos' in the referenced tuple. 
+	 * @param pos The index of the element to return
+	 */
+	public Integer get(Integer pos) {
+		return x.get(pos);
+	}	
+	
+	/*
+	 * Method to return the entire tuple
+	 */
+	public List<Integer> getTupleValues() {
+		return x;
+	}
+	
+	
+	/*
+	 * Method to produce the hash code of the tuple calling it. 
+	 * This is used for comparing the two tuples during sorting but not called explicitly. 
+	 */
+	public int hashCode() {
+		return Objects.hash(x);
+	}
+	
+	
+	/*
+	 * This is a custom method to check for equality between two objects(in this case, Tuples)
+	 * This method is not explicitly called. It is used by internally.
+	 * 
+	 * @param passedObject This is an object passed to compare it with the object that internally called this method.     
+	 */
+	public boolean equals(Object passedObject) {
+		if (this == passedObject) 
+			return true;
+		if(passedObject == null || this.getClass() != passedObject.getClass() )
+			return false;
+		Tuple tuple = (Tuple) passedObject;
+		return Objects.equals(x, tuple.getTupleValues());
+
+	}
+		
+}package ed.inf.adbs.blazedb.operator;
+
+import java.util.HashSet;
+import java.util.Map;
+import ed.inf.adbs.blazedb.Tuple;
+
+/*
+ * This is a class that performs Duplicate Elimination from the tuples that it receives. 
+ * It inserts each tuple into a HashSet if the HashSet does not contain that tuple. 
+ * At the end of scanning all the tuples, it will have a HashSet of only unique values. 
+ */
+public class DuplicateEliminationOperator extends Operator{
+	
+	private Operator root;
+	private HashSet<Tuple> uniqueTuples;
+	
+	/*
+	 * This is the constructor for this class. 
+	 * @param root This is the child operator passed while building query plan
+	 */
+	public DuplicateEliminationOperator(Operator root) {
+		this.root = root;
+		uniqueTuples = new HashSet<Tuple>();
+	}
+	
+	/*
+	 * This is the the method used to iterate through all the tuples passed by the child operator.
+	 * It checks if each tuple is present in the HashSet. If not present, it adds it to the HashSet. Else continues. 
+	 * 
+	 * @return currentTuple This is the tuple that the operator found to be distinct i.e. it was not present in the HashSet
+	 */
+	@Override
+	public Tuple getNextTuple() {
+		
+		Tuple currentTuple = root.getNextTuple();
+		while(   currentTuple!=null ) {
+			
+			if(  !uniqueTuples.contains(currentTuple)   ) {
+				uniqueTuples.add(currentTuple);
+
+				return currentTuple;
+			}
+			
+			currentTuple = root.getNextTuple();
+		}
+		return null;
+	}
+
+	/*
+	 * Method used to reset the state of the operator and ask it to return tuples from the very beginning. 
+	 */
+	@Override
+	public void reset() {
+		root.reset();
+		
+	}
+
+	/*
+	 * This is a method used to return the root's HashMap that contains a mapping from table attributes to integers representing 
+	 * the respective attribute's position in the tuple.
+	 * @return root.attributeHashIndex() The hashMap returned by the root's getAttributeHashIndex() method is returned by this method. 
+	 */
+	@Override
+	protected Map<String, Integer> getAttributeHashIndex() {
+		// TODO Auto-generated method stub
+		return root.getAttributeHashIndex();
+	}
+
+	/*
+	 * Method used to return the root's (child) tableName
+	 * @return The name of the table the root of this operator is referring to. 
+	 */
+	@Override
+	protected String getTableName() {
+		// TODO Auto-generated method stub
+		return root.getTableName();
+	}
+
+}
+package ed.inf.adbs.blazedb.operator;
+
+import java.util.Map;
+
+import ed.inf.adbs.blazedb.Tuple;
+import net.sf.jsqlparser.expression.BinaryExpression;
+import net.sf.jsqlparser.expression.Expression;
+import net.sf.jsqlparser.expression.LongValue;
+import net.sf.jsqlparser.expression.operators.conditional.AndExpression;
+import net.sf.jsqlparser.expression.operators.relational.EqualsTo;
+import net.sf.jsqlparser.expression.operators.relational.GreaterThan;
+import net.sf.jsqlparser.expression.operators.relational.GreaterThanEquals;
+import net.sf.jsqlparser.expression.operators.relational.MinorThan;
+import net.sf.jsqlparser.expression.operators.relational.MinorThanEquals;
+import net.sf.jsqlparser.expression.operators.relational.NotEqualsTo;
+import net.sf.jsqlparser.schema.Column;
+import net.sf.jsqlparser.util.deparser.ExpressionDeParser;
+
+/*
+ * This is a class that is specifically used to evaluate the expression following the WHERE clause
+ * It parses the passed WHERE condition and splits it with respect to the AND keyword. 
+ * Then it evaluates the left and right expressions based on the type of operator present in it. 
+ * Finally calculates the boolean value and returns from the evaluate() method.  
+ */
+public class EvaluateSelection extends ExpressionDeParser{
+
+	private Map<String, Integer> attributeHashIndex; //it maps column names to their index in the tuple
+	private Tuple tuple;   // The tuple being checked
+	private boolean result; // Stores whether the condition is satisfied
+    private String currentValue; // Temporary storage for extracted values
+
+
+    /*
+     * Constructor used to initialize the class variables
+     * @param attributeHashIndex The HashMap that contains a mapping from columnNames to the integer representing column's position in the tuple
+     * @param tuple The actual tuple on which to evaluate the WHERE condition
+     */
+	public EvaluateSelection(Map<String, Integer> attributeHashIndex,Tuple tuple ) {
+		this.attributeHashIndex = attributeHashIndex;
+		this.tuple = tuple;
+		
+		//Going with false by default.
+		this.result = false; 		
+	}
+	
+	
+	/*
+	 * Method to split the main WHERE clause around AND keyword. 
+	 * It works recursively in case there are more than two AND keywords
+	 * 
+	 * @param expr The Expression containing WHERE clause to evaluate
+	 */
+    @Override
+    public void visit(AndExpression expr) {
+        expr.getLeftExpression().accept(this);
+        boolean leftResult = result; // Store result of left condition
+
+        expr.getRightExpression().accept(this);
+        boolean rightResult = result; // Store result of right condition
+
+        // Apply AND logic
+        result = leftResult && rightResult;
+        
+    }
+
+    /*
+     * Method to evaluate the binary expression based on the operator present in the expression and store it in result
+     * 
+     * @param expr BinaryExpression that needs to be evaluated
+     */
+    public void processBinaryExpression(BinaryExpression expr) {
+    	expr.getLeftExpression().accept(this);
+    	int leftValue = Integer.parseInt(currentValue); // left operand
+
+    	expr.getRightExpression().accept(this);
+    	int rightValue = Integer.parseInt(currentValue); //  right operand
+    	
+    	if (expr instanceof EqualsTo) {
+        	result = (leftValue == rightValue);
+        } else if (expr instanceof GreaterThan) {
+            result = (leftValue > rightValue);
+        } else if (expr instanceof MinorThan) {
+            result = (leftValue < rightValue);
+        } else if (expr instanceof GreaterThanEquals) {
+            result = (leftValue >= rightValue);
+        } else if (expr instanceof MinorThanEquals) {
+            result = (leftValue <= rightValue);
+        } else if (expr instanceof NotEqualsTo) {
+            result = (leftValue != rightValue);
+        }
+    }
+    
+    /*
+     * Method that gets called if the expression contains '==' between two operands.
+     * @param expr The expression that needs to be evaluated
+     */
+    @Override
+    public void visit(EqualsTo expr) {
+        processBinaryExpression(expr);
+    }
+    
+    
+    /*
+     * Method that gets called if the expression contains '>' between two operands.
+     * @param expr The expression that needs to be evaluated
+     */
+    @Override
+    public void visit(GreaterThan expr) {
+        processBinaryExpression(expr);
+    }
+
+    
+    /*
+     * Method that gets called if the expression contains '<' between two operands.
+     * @param expr The expression that needs to be evaluated
+     */
+    @Override
+    public void visit(MinorThan expr) {
+        processBinaryExpression(expr);
+    }
+    
+    
+    /*
+     * Method that gets called if the expression contains '>=' between two operands.
+     * @param expr The expression that needs to be evaluated
+     */
+    @Override
+    public void visit(GreaterThanEquals expr) {
+    	processBinaryExpression(expr);
+    }
+    
+    
+    /*
+     * Method that gets called if the expression contains '<=' between two operands.
+     * @param expr The expression that needs to be evaluated
+     */
+    @Override
+    public void visit(MinorThanEquals expr) {
+    	processBinaryExpression(expr);
+    }
+    
+    
+    /*
+     * Method that gets called if the expression contains '!=' between two operands.
+     * @param expr The expression that needs to be evaluated
+     */
+    @Override
+    public void visit(NotEqualsTo expr) {
+    	processBinaryExpression(expr);
+    }
+	
+    
+    /*
+     * Method that gets called when the left or right operand is of the type of a column reference. Its value need to be extracted. 
+     * @param column The column whose integer value needs to be extracted and stored in currentValue variable. 
+     */
+	@Override
+    public void visit(Column column) {
+        if (attributeHashIndex.containsKey(column.toString().toLowerCase())) {
+            currentValue = tuple.get(   attributeHashIndex.get(   column.toString().toLowerCase()   )).toString();
+        }
+    }
+
+	
+	/*
+     * Method that gets called when the left or right operand is of the type of a Long number.  
+     * @param column The column whose  value needs to be stored in currentValue variable. 
+     */
+    @Override
+    public void visit(LongValue longValue) {
+        currentValue = String.valueOf(longValue.getValue());
+        
+    }
+
+    
+    /*
+     * Method to begin the parsing of the WHERE clause. 
+     * From this method it jumps to various 'visit' method based on the expression. 
+     * 
+     *  @param whereCondition The entire WHERE condition passed from the SQL input. 
+     *  @return result The boolean result after evaluating the WHERE clause.
+     */
+    public boolean evaluate(Expression whereCondition) {
+    	// Start traversal using visit methods
+        whereCondition.accept(this); 
+        
+        return result; 
+                
+    }
+    
+}
+package ed.inf.adbs.blazedb.operator;
+
+import java.util.List;
+import java.util.Map;
+import ed.inf.adbs.blazedb.Tuple;
+import net.sf.jsqlparser.expression.Expression;
+import net.sf.jsqlparser.expression.operators.relational.ComparisonOperator;
+import net.sf.jsqlparser.expression.operators.relational.EqualsTo;
+import net.sf.jsqlparser.expression.operators.relational.GreaterThan;
+import net.sf.jsqlparser.expression.operators.relational.GreaterThanEquals;
+import net.sf.jsqlparser.expression.operators.relational.MinorThan;
+import net.sf.jsqlparser.expression.operators.relational.MinorThanEquals;
+import net.sf.jsqlparser.expression.operators.relational.NotEqualsTo;
+
+
+/*
+ * This is the class of JoinOperators. At any instance, it takes two tables and performs a join on them based on the join conditions.
+ * If there is no where clause, it simply concatenates both the tuples it is currently focusing on.
+ * If there is a where clause, it join the two tuples it is focusing on, if the conditions mentioned match for them.
+ * 
+ */
+public class JoinOperator extends Operator{
+	
+	private Operator leftChild;
+	private Operator rightChild;
+	private List<Expression> joinExpression;
+	private Tuple leftTuple;
+	private Tuple rightTuple;
+	private Map<String, Integer> leftAttributeHashIndex;
+	private Map<String, Integer> rightAttributeHashIndex;
+
+	
+    /*
+     * Constructor for the joinOperator
+     * 
+     * @param lChild This is the left child (table) to be joined
+     * @param rChild This is the right child (table) to be joined
+     */
+	public JoinOperator(Operator lChild, Operator rChild){
+		this.leftChild = lChild;
+		this.rightChild = rChild;
+		this.joinExpression = null;
+		this.leftTuple = leftChild.getNextTuple();
+		this.rightTuple = null;
+		this.leftAttributeHashIndex = null;
+		this.rightAttributeHashIndex = null;
+	}
+	
+	
+	/*
+	 * This too is a constructor for joinOperator - constructor overloading as it just differs by a arguments passed from the above constructor.
+	 * 
+	 * @param lChild This is the left child (table) to be joined
+	 * @param rChild This is the right child (table) to be joined
+	 * @param tableJoinClause This is a List of Expressions that need to match for the tables to be joined
+	 * @param leftAttributeHashIndex HashMap that maps table attributes to the integer representing its position in the tuple of left child
+	 * @param rightAttributeHashIndex HashMap that maps table attributes to the integer representing its position in the tuple of right child
+	 */
+	public JoinOperator(Operator lChild, Operator rChild, List<Expression> tablesJoinClause, Map<String, Integer> leftAttributeHashIndex, Map<String, Integer> rightAttributeHashIndex) {
+		this.leftChild = lChild;
+		this.rightChild = rChild;
+		this.joinExpression = tablesJoinClause;
+		this.leftTuple = leftChild.getNextTuple();
+		this.rightTuple = null;
+		this.leftAttributeHashIndex = leftAttributeHashIndex;
+		this.rightAttributeHashIndex = rightAttributeHashIndex;
+	}
+
+	
+	/*
+	 * Method that scans each and every pair of tuples from both tables and joins them based on some conditions. 
+	 * If conditions are present and applicable for these tables, they need to be satisfied to join them (equijoin)
+	 * If conditions are not present, it performs a cross join of the two tables
+	 *  
+	 */
+	@Override
+	public Tuple getNextTuple() {
+		
+		
+		while(leftTuple!=null) {
+			if(rightTuple==null) {
+				rightTuple = rightChild.getNextTuple();
+			}
+			
+			while(rightTuple!=null) {
+				
+				
+				if(joinExpression==null) {
+					
+					//cross join
+					Tuple newlyJoinedTuple = concatenateTuples(leftTuple, rightTuple);
+					rightTuple = rightChild.getNextTuple();
+					return newlyJoinedTuple;	
+				}
+				else {
+					//equijoin					
+					if(joinExpression.size()==1) {
+						//There is just one condition to join the table
+					
+						ComparisonOperator evalExp = (ComparisonOperator) joinExpression.get(0) ;
+						String leftExpressionString = evalExp.getLeftExpression().toString();
+						String rightExpressionString = evalExp.getRightExpression().toString();
+					
+						//I am filtering and sending the condition to this class only if it is for the two tables that are being sent.
+						//Hence here, I am not checking if the conditions are matching to the tables.
+						//I am just checking if the values of conditions are matching.
+						if (compareValues(evalExp, leftExpressionString, rightExpressionString)) {
+							Tuple newlyJoinedTuple = concatenateTuples(leftTuple, rightTuple);
+							rightTuple = rightChild.getNextTuple();
+							return newlyJoinedTuple;
+						}
+
+						rightTuple = rightChild.getNextTuple();
+
+					}
+					else {
+						//There will be more than 1 clause to join two tables
+						//Iterating through the joinExpression to check for all the clauses before joining.
+						int flag=1;
+						for(Expression e: joinExpression) {
+							
+							ComparisonOperator evalExp = (ComparisonOperator) e ;
+							String leftExpressionString = evalExp.getLeftExpression().toString();
+							String rightExpressionString = evalExp.getRightExpression().toString();
+
+							if(compareValues(evalExp, leftExpressionString, rightExpressionString)) {
+								flag=flag*1;
+							}
+							else {
+								//In case it comes here, it means that one of the conditions to join these two tuples is false. 
+								//Hence we should not join them.
+								flag=0; 
+								break;
+							}
+						}
+						
+						if(flag==1) {
+							//Meaning all the conditions for join is satisfied for these two tuples
+							Tuple newlyJoinedTuple = concatenateTuples(leftTuple, rightTuple);
+							rightTuple = rightChild.getNextTuple();
+							return newlyJoinedTuple;
+						}
+						rightTuple = rightChild.getNextTuple();
+					}
+				}
+			}	
+			rightChild.reset();
+			leftTuple = leftChild.getNextTuple();	
+		}
+		return null;
+	}
+	
+	
+	/*
+	 * Method to compare the values of two tuples based on the operator between them
+	 * @param operator It is actually the joinExpression passed in the form of a ComparisonOperator. 
+	 * @param leftCol the left operand in the join expression
+	 * @param rightCol the right operand in the join expression
+	 * @return (boolean value) The boolean result of evaluating the expression using values from left and right operands
+	 */
+	private boolean compareValues(ComparisonOperator operator, String leftCol, String rightCol) {
+		Comparable leftValue = leftTuple.get(leftAttributeHashIndex.get(leftCol.toLowerCase()));
+		Comparable rightValue = rightTuple.get(rightAttributeHashIndex.get(rightCol.toLowerCase()));
+		
+		if (operator instanceof EqualsTo) {
+	        return leftValue.compareTo(rightValue) == 0;
+	    } else if (operator instanceof NotEqualsTo) {
+	        return leftValue.compareTo(rightValue) != 0;
+	    } else if (operator instanceof GreaterThan) {
+	        return leftValue.compareTo(rightValue) > 0;
+	    } else if (operator instanceof GreaterThanEquals) {
+	        return leftValue.compareTo(rightValue) >= 0;
+	    } else if (operator instanceof MinorThanEquals) {
+	        return leftValue.compareTo(rightValue) <= 0;
+	    } else if (operator instanceof MinorThan) {
+	        return leftValue.compareTo(rightValue) < 0;
+	    }
+	    return false;	
+	}
+	
+	/*
+	 * Method to concatenate two tuples (join two tuples)
+	 * @param lTup The left tuple (list of integers) 
+	 * @param rTup The right tuple (list of integers) to be joined to the left tuple
+	 * @return joinedTuple The result obtained after the right tuple is concatenated/joined to the left tuple
+	 */
+	public Tuple concatenateTuples(Tuple lTup, Tuple rTup) {
+		
+		Tuple joinedTuple = new Tuple();
+		joinedTuple.addTuple(lTup);
+		joinedTuple.addTuple(rTup);
+		return joinedTuple;			
+	}
+
+	
+	/*
+	 * Method to reset the rightChild (inner table) 
+	 */
+	@Override
+	public void reset() {
+		rightChild.reset();
+	}
+
+	/*
+	 * This is a method used to return the left child's HashMap that contains a mapping from table attributes to integers representing 
+	 * the respective column's position in the tuple.
+	 * @return leftAttributeHashIndex HashMap that maps left child's attributes to integers representing its position. 
+	 */
+	@Override
+	protected Map<String, Integer> getAttributeHashIndex() {
+		return leftAttributeHashIndex;
+	}
+
+	
+	/*
+	 * Method used to return the left child's tableName
+	 * @return The name of the table the root of this operator is referring to. 
+	 */
+	@Override
+	protected String getTableName() {
+		return leftChild.getTableName();
+	}
+
+}
+package ed.inf.adbs.blazedb.operator;
+
+import java.util.Map;
+
+import ed.inf.adbs.blazedb.Tuple;
+
+/**
+ * The abstract Operator class for the iterator model.
+ *
+ * Feel free to modify this class, but must keep getNextTuple() and reset()
+ */
+public abstract class Operator {
+
+    /**
+     * Retrieves the next tuple from the iterator.
+     * @return A Tuple object representing the row of data, or NULL if EOF reached.
+     */
+    public abstract Tuple getNextTuple();
+
+    /**
+     * Resets the iterator to the start.
+     */
+    public abstract void reset();
+
+    /**
+     * To get the details of the mapping between column name and corresponding integer
+     * @return A hashMap with attributes as keys and its integer position in the schema
+     */
+	protected abstract Map<String, Integer> getAttributeHashIndex();
+
+	/*
+	 * To return the name of the table calling this operator
+	 */
+	protected abstract String getTableName();
+}package ed.inf.adbs.blazedb.operator;
+
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+
+import ed.inf.adbs.blazedb.Tuple;
+import net.sf.jsqlparser.expression.Expression;
+import net.sf.jsqlparser.schema.Column;
+import net.sf.jsqlparser.statement.select.SelectItem;
+
+/*
+ * This class deals with applying Projection on the tables. 
+ * 
+ */
+public class ProjectionOperator extends Operator {
+
+	
+	private Operator root;
+	private List<SelectItem<?>> SELECT;
+	private Map<String, Integer> attributeHashIndex;
+	private List<String> colsToBeProjected;
+	private Map<String, Integer> projectedAttributesHashIndex;
+
+	
+	/*
+	 * This Method is the constructor of this class. 
+	 * It generates two new variables - 
+	 * 						colsToBeProjected (list containing all the columns to be projected)
+	 * 						projectedAttributesHashIndex (HashMap of the resulting table - Maps attributes to integers representing its position in the tuple/table)
+	 * 
+	 * @param root The operator child of this Projection operator 
+	 * @param SELECT The list of all the things(columns or functions) that needs to be projected
+	 * @param attributeHashIndex The HashMap that maps attributes to the integer representing its position in the tuple/table
+	 */
+	public ProjectionOperator(Operator root, List<SelectItem<?>> SELECT, Map<String, Integer> attributeHashIndex) {
+		this.root = root;
+		this.SELECT=SELECT;
+		this.attributeHashIndex = attributeHashIndex;
+		this.projectedAttributesHashIndex = new HashMap<>();
+		
+	    colsToBeProjected = new ArrayList<>();
+	    
+	    int index=0;
+		for(SelectItem<?> col : this.SELECT) {
+			
+			if(col instanceof SelectItem) {										
+				Expression exp = ((SelectItem)col).getExpression();
+				
+				if(exp instanceof Column) {
+					Column column = (Column)exp;
+					colsToBeProjected.add(column.toString().toLowerCase());
+					projectedAttributesHashIndex.put(column.toString().toLowerCase(), index++);
+		
+				}
+			}
+		} 
+	}
+	
+	/*
+	 * Method to look at the passed tuple and extract the values of those columns which need to be projected 
+	 * and add it to an output tuple
+	 * @param tuple This is a tuple passed from getNextTuple method from which we need to extract the necessary values
+	 * @return projectedTuple The tuple consisting of values projected from the original passed tuple
+	 */
+	public Tuple ProjectCol(Tuple tuple) {
+		
+		Tuple projectedTuple = new Tuple();
+		
+		for(String col : colsToBeProjected) {
+			if(attributeHashIndex.containsKey(col)) {
+				projectedTuple.add(tuple.get(attributeHashIndex.get(col)));
+			}
+		}	
+		return projectedTuple;
+	}
+	
+	
+	/*
+	 * The Method to iterate over all the tuples coming from its child and pass it to extract the necessary columns.
+	 * @return (tuple) The tuple consisting only of values projected from the original tuple
+	 */
+	@Override
+	public Tuple getNextTuple() {
+		
+		while(true) {
+			Tuple tuple = root.getNextTuple();
+			if(tuple==null) {
+				return null;
+			}
+			return ProjectCol(tuple); 
+		}
+	}
+
+	
+	/*
+	 * Method used to reset the state of the operator and ask it to return tuples from the very beginning. 
+	 */
+	@Override
+	public void reset() {
+		root.reset();
+	}
+
+	
+	/*
+	 * Method to return the new HashMap containing the mapping of projected columns to integers representing its position in the new table
+	 * @return projectedAttributesHashIndex HashMap that maps projected attributes to integer positions in table (such as student.a=0, student.b=1)
+	 */
+	@Override
+	protected Map<String, Integer> getAttributeHashIndex() {
+		return projectedAttributesHashIndex;
+	}
+
+	
+	/*
+	 * Method to return the table name used in the child of Project operator. 
+	 * @return (string) name of the table used in the child operator. 
+	 */
+	@Override
+	protected String getTableName() {
+		return root.getTableName();
+	}
+	
+}
+package ed.inf.adbs.blazedb.operator;
+
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Map;
+import ed.inf.adbs.blazedb.DatabaseCatalog;
+import net.sf.jsqlparser.expression.Expression;
+import net.sf.jsqlparser.expression.operators.conditional.AndExpression;
+import net.sf.jsqlparser.expression.operators.conditional.OrExpression;
+import net.sf.jsqlparser.expression.operators.relational.ComparisonOperator;
+import net.sf.jsqlparser.expression.operators.relational.EqualsTo;
+import net.sf.jsqlparser.expression.operators.relational.ExpressionList;
+import net.sf.jsqlparser.expression.operators.relational.GreaterThan;
+import net.sf.jsqlparser.expression.operators.relational.GreaterThanEquals;
+import net.sf.jsqlparser.expression.operators.relational.MinorThan;
+import net.sf.jsqlparser.expression.operators.relational.MinorThanEquals;
+import net.sf.jsqlparser.expression.operators.relational.NotEqualsTo;
+import net.sf.jsqlparser.schema.Column;
+import net.sf.jsqlparser.statement.select.Distinct;
+import net.sf.jsqlparser.statement.select.FromItem;
+import net.sf.jsqlparser.statement.select.Join;
+import net.sf.jsqlparser.statement.select.OrderByElement;
+import net.sf.jsqlparser.statement.select.SelectItem;
+
+
+/*
+ * This is the class which build the query plan and passes it for execution.
+ * It checks all the variables containing the parsed SQL queries and decides which operator to be called. 
+ * The buildQueryPlan method is divided into two - One which handles all queries involving JOIN, another that handles queries with no JOIN
+ * 
+ */
+public class QueryPlan {
+	
+	/*
+	 * Constructor method that takes all the parsed SQL query variables and calls the necessary operators to build tree of operators
+	 * Two main parts are present. One that handles JOIN clause and one that doesnt. 
+	 * 
+	 * 
+	 * @param SELECT The list of SelectItems that mentions all the attributes that needs to be in the output
+	 * @param DISTINCT The variable that mentions if duplicates need to be eliminated in the output
+	 * @param ORDERBY The list of OrderByElements which specifies the attributes, using which the tuples need to be sorted. 
+	 * @param GROUPBY The ExpressionList that mentions the attributes that need to be grouped together to produce the output.
+	 * @param WHERE It is the Expression that contains all the WHERE clauses that the tuples need to satisfy to be printed.
+	 * @param JOIN It consists of all the tables that needs to be joined to the first table. It will be null if only one table is specified in input SQL file. 
+	 * @param FROM The name of the first table that needs to be scanned.
+	 * @return (Operator) The root of the execution tree to be returned. it is of they type operator. 
+	 */
+	public static Operator buildQueryPlan(List<SelectItem<?>> SELECT, Distinct DISTINCT, List<OrderByElement> ORDERBY,
+									  ExpressionList GROUPBY, Expression WHERE, List<Join> JOIN, FromItem FROM) {
+		
+		DatabaseCatalog catalog = DatabaseCatalog.getInstance();
+		
+		
+		if(JOIN==null) {
+			
+			//This ensures that there is only 1 table because FromItem picks up only one table
+			Operator root=new ScanOperator(FROM.toString());
+			Map<String, Integer> attributeHashIndex = root.getAttributeHashIndex();
+			
+			if(WHERE!=null) {
+				root = new SelectionOperator(root, WHERE, attributeHashIndex);
+			}
+			
+			//Sorting can be done here as well but it leads to larger tuples being compared which can reduce the speed
+			if(!SELECT.toString().contains("[*]")) {
+				
+				if(!SELECT.toString().toLowerCase().contains("sum") && GROUPBY == null) {
+					//Normal column projection
+					root = new ProjectionOperator(root, SELECT, attributeHashIndex);
+					//Pulling the new attribute hash index containing the projected columns only
+					attributeHashIndex = root.getAttributeHashIndex();
+				}
+				
+				else
+				{	//Handles the case where SUM and/or GROUPBY is present
+					root = new SumOperator(root, GROUPBY, SELECT, attributeHashIndex);
+					attributeHashIndex = root.getAttributeHashIndex();
+				}
+				
+			}
+			if(DISTINCT!=null) {
+				root = new DuplicateEliminationOperator(root);
+			}
+			if(ORDERBY!=null) {
+				root = new SortOperator(root, ORDERBY, attributeHashIndex);	
+			}
+			return root;
+			
+		} //end of if(JOIN==null) block
+		
+		
+		
+		if(JOIN!=null) {
+			Operator leftChild = new ScanOperator(FROM.toString());
+			Map<String, Integer> attributeHashIndex_lChild = leftChild.getAttributeHashIndex();
+			String leftTableName = FROM.toString();
+
+			
+			//split the where clause	
+			List<Expression> listExp = splitExpression(WHERE);			
+			if(!(WHERE==null)){
+				
+				//This checking is just for the first table. 
+				//For all other subsequent tables, it happens inside the following loop. 
+				List<Expression> listTableOneClause=conditionForTable(listExp, leftTableName);
+				if(!listTableOneClause.isEmpty()) {
+					Expression tableOneClause = combineWithAnd(listTableOneClause);
+					leftChild = new SelectionOperator(leftChild, tableOneClause, attributeHashIndex_lChild);
+				}
+			}
+			
+			
+			
+			for( Join join : JOIN ) {
+				
+				//this loop is to iteratively handle all the tables in JOIN 								
+				Operator rightChild = new ScanOperator(join.getRightItem().toString());
+				Map<String, Integer> attributeHashIndex_rChild = rightChild.getAttributeHashIndex();
+				
+				if(!(WHERE==null)) {
+					
+					List<Expression> listTableTwoClause=conditionForTable(listExp, join.toString());
+					if(!listTableTwoClause.isEmpty())
+					{
+						Expression tableTwoClause = combineWithAnd(listTableTwoClause);
+						rightChild = new SelectionOperator(rightChild, tableTwoClause, attributeHashIndex_rChild);	
+					}
+
+					List<Expression> listTablesJoinClause = conditionsForTwoTables(listExp,leftTableName,join.toString());
+					if(!listTablesJoinClause.isEmpty()) {
+						//If there is a condition for these two tables, pass it to join operator
+						leftChild = new JoinOperator(leftChild, rightChild, listTablesJoinClause, attributeHashIndex_lChild, attributeHashIndex_rChild );
+					}				
+					else {
+						//If there is something in WHERE clause that is not applicable to these two tables, simply compute the cross product
+						leftChild = new JoinOperator(leftChild, rightChild);
+					}
+				}	
+				else {
+					//Since WHERE clause is null, just perform a cross join of the two tables
+					leftChild = new JoinOperator(leftChild, rightChild);
+				}
+				
+				int offset=attributeHashIndex_lChild.size();
+				
+				//Combining the schemas to ensure that for any subsequent joins, the updated schema is used
+				for (Map.Entry<String, Integer> entry : attributeHashIndex_rChild.entrySet()) {
+					if(!attributeHashIndex_lChild.containsKey(entry.getKey()))
+						attributeHashIndex_lChild.put(entry.getKey(), entry.getValue() + offset);
+				}
+				leftTableName = leftTableName.concat(" join "+join.toString());
+			
+			} //End of for( Join join : JOIN ) block
+
+			
+				
+			//Sorting can be done here as well but it leads to larger tuples being compared which can reduce the speed
+			if(!SELECT.toString().contains("[*]")) {
+				if(!SELECT.toString().toLowerCase().contains("sum") && GROUPBY == null) {
+					//Handling projection of column attributes only. No SUM() and No GROUPBY
+					leftChild = new ProjectionOperator(leftChild, SELECT, attributeHashIndex_lChild);
+					//Pulling the new attribute hash index(schema) containing the projected columns only
+					attributeHashIndex_lChild = leftChild.getAttributeHashIndex();
+				}
+				else
+				{	//Presence of SUM and/or GROUPBY
+					leftChild = new SumOperator(leftChild, GROUPBY, SELECT, attributeHashIndex_lChild);
+					//Pulling the new attribute hash index(Schema) containing the projected columns only
+					attributeHashIndex_lChild = leftChild.getAttributeHashIndex();
+				}
+				
+			}
+			
+			
+			
+			if(DISTINCT!=null) {
+				leftChild = new DuplicateEliminationOperator(leftChild);
+			}
+			
+			if(ORDERBY!=null) {
+				leftChild = new SortOperator(leftChild, ORDERBY, attributeHashIndex_lChild);
+			}
+			return leftChild;
+			
+		}
+		return null;
+		
+	}
+	
+	
+	/*
+	 * This method is for checking if the WHERE conditions passed is applicable to the tables that is passed
+	 * This method takes two tables and a list of expression. 
+	 * @param listExp This is a list of Expression consisting of WHERE clauses
+	 * @param tableOne The name(String) of the first table to be joined 
+	 * @param tableTwo The name(String) of the second table to be joined
+	 * @return returnClause The List of expression containing the correct order of all the WHERE clauses applicable to these two tables.
+	 */
+	private static List<Expression> conditionsForTwoTables(List<Expression> listExp, String tableOne, String tableTwo){
+		
+		List<Expression> returnClause = new ArrayList<>();
+		
+		for(Expression exp : listExp) {
+			ComparisonOperator e = (ComparisonOperator) exp;
+			
+//			if (exp instanceof GreaterThan)
+//			{
+//				e = (GreaterThan) exp;
+//			}
+//			if (exp instanceof MinorThan)
+//			{
+//				e = (MinorThan) exp;
+//			}
+//			if (exp instanceof GreaterThanEquals)
+//			{
+//				e = (GreaterThanEquals) exp;
+//			}
+//			if (exp instanceof MinorThanEquals)
+//			{
+//				e = (MinorThanEquals) exp;
+//			}
+//			if (exp instanceof EqualsTo)
+//			{
+//				e = (EqualsTo) exp;
+//			}
+//			if (exp instanceof NotEqualsTo)
+//			{
+//				e = (NotEqualsTo) exp;
+//			}
+			
+			if(tableOne.contains("join")) {
+				//The left table is a result of a previous JOIN operation
+				
+				String[] leftTableInJoinClause = e.getLeftExpression().toString().toLowerCase().split("\\."); 
+				String[] rightTableInJoinClause = e.getRightExpression().toString().toLowerCase().split("\\.");
+				
+				//Index 0 will be the name of the table that we wish to check
+				//Checking for commutativity of WHERE clause. Student <op> Course and Course <op> Student
+				if (   (tableOne.toLowerCase().contains(leftTableInJoinClause[0].toLowerCase()) 
+					    &&
+				       tableTwo.toLowerCase().contains(rightTableInJoinClause[0].toLowerCase()))   
+					   ||
+					   (tableOne.toLowerCase().contains(rightTableInJoinClause[0].toLowerCase()) 
+					    &&
+						tableTwo.toLowerCase().contains(leftTableInJoinClause[0].toLowerCase())   )
+					)
+				{
+					if((tableOne.toLowerCase().contains(leftTableInJoinClause[0].toLowerCase()) 
+					    &&
+				       tableTwo.toLowerCase().contains(rightTableInJoinClause[0].toLowerCase())))
+					{
+						//The order of WHERE clause is in the order of table specified. Hence add it as it is. 
+						returnClause.add(e);
+					}
+					else if((tableOne.toLowerCase().contains(rightTableInJoinClause[0].toLowerCase()) 
+						    &&
+							tableTwo.toLowerCase().contains(leftTableInJoinClause[0].toLowerCase())   ))
+					{
+						//Handling the case where the Tables and Join Conditions are in reverse order
+						//For example: SELECT * FROM Student, Enrolled WHERE Enrolled.A = Student.A;
+						//Hence reverse the WHERE conditions and add it to the list of conditions
+						returnClause.add(reorderClause(e));
+					}
+				}
+				
+				
+			}
+			else {
+				//The left table is not a result of previous join operation
+				if
+				(	//Checking for the join condition commutativity
+					(e.getLeftExpression().toString().toLowerCase().contains(tableOne.toLowerCase())
+					&& e.getRightExpression().toString().toLowerCase().contains(tableTwo.toLowerCase()) )
+				    ||
+				    (e.getLeftExpression().toString().toLowerCase().contains(tableTwo.toLowerCase())
+				    && e.getRightExpression().toString().toLowerCase().contains(tableOne.toLowerCase()))	
+				)					
+				{
+					if(   e.getLeftExpression().toString().toLowerCase().contains(tableOne.toLowerCase())
+						&& e.getRightExpression().toString().toLowerCase().contains(tableTwo.toLowerCase())    ) 
+					{	//Order of join attributes same as order of tables
+						returnClause.add(e);
+					}
+					else if(  e.getLeftExpression().toString().toLowerCase().contains(tableTwo.toLowerCase())
+						&& e.getRightExpression().toString().toLowerCase().contains(tableOne.toLowerCase()) ) {
+						//Split the clause. Reorder it and add it to list
+						returnClause.add(reorderClause(e));
+					}
+				}
+			}	
+		}
+		return returnClause;
+	}
+	
+	
+	/*
+	 * Method to reorder the Expressions in the WHERE clause. 
+	 * There can be a case where the order of tables and their WHERE conditions specified are interchanged. 
+	 * This method helps to swap the order of Expressions in the WHERE clause. 
+	 * @param e The WHERE clause in the form of ComparisonOperator. Consists of a leftExpression and a rightExpression joined by an Operator
+	 * @return reversedClause The WHERE clause in the form of ComparisonOperator with correct order of Expression. (same as the order of tables)
+	 */
+	private static ComparisonOperator reorderClause(ComparisonOperator e) {
+		ComparisonOperator reversedClause = null;
+		
+		Expression leftExp = e.getLeftExpression();
+		Expression rightExp = e.getRightExpression();
+		ComparisonOperator op = null;
+		
+		if(e instanceof GreaterThan) {
+			op = new MinorThan();	
+		}
+		if(e instanceof MinorThan) {
+			op = new GreaterThan();
+		}
+		if(e instanceof GreaterThanEquals) {
+			op = new MinorThanEquals();
+		}
+		if(e instanceof MinorThanEquals) {
+			op = new GreaterThanEquals();
+		}
+		if(e instanceof EqualsTo) {
+			op = new EqualsTo();
+		}
+		if(e instanceof NotEqualsTo) {
+			op = new NotEqualsTo();
+		}
+		
+		op.setLeftExpression(rightExp);
+		op.setRightExpression(leftExp);
+		reversedClause = op;
+		
+		return reversedClause;
+	}
+	
+	
+	/*
+	 * This method is for checking if the WHERE conditions passed is applicable to the table that is passed
+	 * This method takes one tables and entire list of expression. 
+	 * @param listExp This is a list of Expression consisting of WHERE clauses
+	 * @param table The name(String) of the table to be checked
+	 * @return returnClause The List of expression containing all the WHERE clauses applicable to the passed table
+	 */
+	private static List<Expression> conditionForTable(List<Expression> listExp, String table) {
+		
+		List<Expression> returnClause = new ArrayList<>();
+		
+		for(Expression exp: listExp) {
+		
+			ComparisonOperator e = (ComparisonOperator) exp;
+			
+//			if (exp instanceof GreaterThan)
+//			{
+//				e = (GreaterThan) exp;
+//			}
+//			
+//			if (exp instanceof MinorThan)
+//			{
+//				e = (MinorThan) exp;
+//			}
+//			
+//			if (exp instanceof GreaterThanEquals)
+//			{
+//				e = (GreaterThanEquals) exp;
+//			}
+//			
+//			if (exp instanceof MinorThanEquals)
+//			{
+//				e = (MinorThanEquals) exp;
+//			}
+//			
+//			if (exp instanceof EqualsTo)
+//			{
+//				e = (EqualsTo) exp;
+//			}
+//			
+//			if (exp instanceof NotEqualsTo)
+//			{
+//				e = (NotEqualsTo) exp;
+//			}
+			
+
+			if //This checks if the where clause for the table is a single table where clause or not
+			(	
+				(e.getLeftExpression().toString().toLowerCase().contains(table.toLowerCase())  
+				&& e.getRightExpression().toString().toLowerCase().contains(table.toLowerCase()))
+				||
+				(e.getLeftExpression().toString().toLowerCase().contains(table.toLowerCase())  
+				&& !(e.getRightExpression() instanceof Column))
+				||
+				(e.getRightExpression().toString().toLowerCase().contains(table.toLowerCase())
+				&& !(e.getLeftExpression() instanceof Column))
+				||
+				(isInteger(e.getLeftExpression()) && isInteger(e.getRightExpression()))		
+			) 
+			{
+				returnClause.add(e);		
+			}
+		}
+        return returnClause;
+    }
+	
+	/*
+	 * Method to check if the passed Expression is of the type Integer or not
+	 * @param exp The Expression read from the WHERE clause. 
+	 * @return (boolean) The result of checking if the passed parameter is an integer or not,
+	 */
+	public static boolean isInteger(Expression exp)
+	{
+		try {
+			Integer.parseInt(exp.toString() );
+			return true;
+			
+		}
+		catch(NumberFormatException e) {
+			return false;
+		}
+	}
+	
+	
+	/*
+	 * Method to recursively split the given Expression into a list of expression. 
+	 * Since we are using only AND operator to join the Expressions, this method can be used. 
+	 * In case there is OR used to join the operators, then this approach of dealing with queries might not be optimal. 
+	 * @param expression The Expression containing the entire WHERE clause parsed from the SQL input file. 
+	 * @return expressionList This is a list of Expressions that is obtained after splitting all the passed Expression
+	 */
+	private static List<Expression> splitExpression(Expression expression) {
+        List<Expression> expressionList = new ArrayList<>();
+        
+        //if the expression is a logical conjunction and/or then split it recursively
+        if (expression instanceof AndExpression) {
+            AndExpression andExpression = (AndExpression) expression;
+            
+            expressionList.addAll(splitExpression(andExpression.getLeftExpression()));
+            expressionList.addAll(splitExpression(andExpression.getRightExpression()));
+        } 
+        //The below wont be of much use to this program but added anyway to test custom queries. 
+        else if (expression instanceof OrExpression) {
+            OrExpression orExpression = (OrExpression) expression;
+            
+            expressionList.addAll(splitExpression(orExpression.getLeftExpression()));
+            expressionList.addAll(splitExpression(orExpression.getRightExpression()));
+        } 
+        else {
+            // Base case: simple expression
+        	expressionList.add(expression);
+        }
+        return expressionList;
+    }
+	
+	/*
+	 * Method to combine the list of expressions back to a single Expression using AND keyword.
+	 * I understand this method and previous method are contradicting to each other but I used this approach to make better computations during
+	 * query evaluation. 
+	 * @param expressions The list of expressions to be joined using AND keyword
+	 * @return combinedExpression The single Expression that contains all the expressions joined together. 
+	 */
+	private static Expression combineWithAnd(List<Expression> expressions) {
+        if (expressions == null || expressions.isEmpty()) {
+            return null;  // No expressions to combine
+        }
+
+        // Start with the first expression
+        Expression combinedExpression = expressions.get(0);
+
+        // Iterate through the list and combine the expressions with AND
+        for (int i = 1; i < expressions.size(); i++) {
+            combinedExpression = new AndExpression(combinedExpression, expressions.get(i));
+        }
+        
+        return combinedExpression;
+    }
+}
+
+	
+	package ed.inf.adbs.blazedb.operator;
+
+import java.io.*;
+import java.util.*;
+import ed.inf.adbs.blazedb.DatabaseCatalog;
+import ed.inf.adbs.blazedb.Tuple;
+
+/*
+ * This class defines the ScanOperator which is responsible for opening the files containing the tables data and read it row wise. 
+ * Also creates a HashMap that is used extensively in many other operators
+ */
+public class ScanOperator extends Operator {
+
+	private BufferedReader reader;
+	private String tableName;
+	private String filePath;
+	private List<String> schema;
+	private String currentLine;
+	private Map<String, Integer> attributeHashIndex;
+	int noOfTuples;
+	boolean isEmpty;
+
+	
+	/*
+	 * This is the constructor of this class. Apart from initializing the class variables, it also creates a HashMap. 
+	 * The HashMap contains a mapping from the columnNames of the table to an integer value representing the column's position in the table
+	 * for example, Student.A=0, Student.B=1, Student.C=2 and so on
+	 * @param tableName It is the name of the table which must be read row-wise
+	 */
+	public ScanOperator(String tableName) {       
+				
+		this.tableName = tableName.toLowerCase();
+		this.filePath = DatabaseCatalog.getInstance().getTableFilePath(tableName);       
+		this.schema = DatabaseCatalog.getInstance().getTableSchema(tableName);			  
+		
+		this.attributeHashIndex = new HashMap<>();
+		
+		//Handling empty table
+		if(this.schema==null) {
+			isEmpty = true;
+			return;
+		}
+		isEmpty=false;
+		int index=0;
+		for(String x:  this.schema) {
+			attributeHashIndex.put(x, index++);
+		}
+		
+		noOfTuples=0;
+		openFile();
+	}
+	
+	/*
+	 * Getter method to return the name of the table
+	 * @return tableName Contains the name of the table to be returned
+	 */
+	public String getTableName() {
+		return tableName;
+	}
+	
+	
+	/*
+	 * Getter method to return the schema of the table
+	 * @return (list<String>) returns a list of strings that contain schema of the table
+	 */
+	public List<String> getSchema(){
+		return this.schema;
+	}
+
+	
+	/*
+	 * Method that opens the file containing data about the table.
+	 * It uses the filePath argument to open the table to read its data
+	 */
+	private void openFile() {
+		try {
+			reader = new BufferedReader(new FileReader(filePath));
+		} catch (FileNotFoundException e) {
+			System.err.println("Error: Table file not found: " + filePath);
+			e.printStackTrace();
+		}
+	}
+
+
+	/*
+	 * Method to read the opened file line by line and store the data in a list of strings. 
+	 * It then parses these strings to store the data in a tuple (which is a list of integers)
+	 * @return tuple The row of data that is read from the file is returned
+	 */
+	@Override
+	public Tuple getNextTuple() {
+		if (isEmpty) {
+			//Handling empty tables
+			return null;
+		}
+		try {
+			if ((currentLine = reader.readLine()) != null) {
+				// Convert the CSV line into a list of integers (since all values are integers)
+				String[] values = currentLine.split(",");
+				Tuple tuple = new Tuple();
+				for (String value : values) {
+					tuple.add(Integer.parseInt(value.trim()));
+				}
+				noOfTuples++;
+				return tuple;
+			} else {
+				return null; // End of file
+			}
+		} catch (IOException e) {
+			e.printStackTrace();
+			return null;
+		}
+	}
+
+	
+	/*
+	 * Method used to reset the state of the operator and ask it to return tuples from the very beginning. 
+	 * Closing and reopening the file sets it to read it from the beginning
+	 */
+	@Override
+	public void reset() {
+		try {
+			reader.close();
+			openFile(); 				// Reopen the file to reset the iterator
+		} catch (IOException e) {
+			e.printStackTrace();
+		}
+	}
+	
+	
+	/*
+	 * getter function to return the attribute hash map containing mapping from attribute to integer positions in table
+	 * @return attributeHashIndex HashMap mapping table attributes to their corresponding integer position values
+	 */
+	public Map<String, Integer> getAttributeHashIndex(){
+		return attributeHashIndex;
+	}
+	
+	
+	/*
+	 * Method that closes the file after is read completely
+	 */
+	public void close() {
+		try {
+			if (reader != null) {
+				reader.close();
+			}
+		} catch (IOException e) {
+			e.printStackTrace();
+		}
+	}
+}
+
+
+package ed.inf.adbs.blazedb.operator;
+
+import java.util.Map;
+
+import ed.inf.adbs.blazedb.Tuple;
+import net.sf.jsqlparser.expression.Expression;
+
+/*
+ * This class defines the SelectionOperator which takes a WHERE condition and returns only those tuples
+ * which satisfy the condition.
+ */
+public class SelectionOperator extends Operator{
+	
+	private Operator root;
+	private Expression whereCondition;
+	private Map<String, Integer> attributeHashIndex;
+	
+	/*
+	 * Constructor for this class. 
+	 * @param root The child operator of this Selection Operator
+	 * @param whereCondition This is an Expression that has one or many WHERE clauses joined by AND clause
+	 * @param attributeHashIndex HashMap that maps table attributes to integers representing the attribute's position in the table
+	 */
+	public SelectionOperator(Operator root, Expression whereCondition, Map<String, Integer> attributeHashIndex) {
+		this.root = root;
+		this.whereCondition = whereCondition;
+		this.attributeHashIndex = attributeHashIndex;
+	}
+	
+	/*
+	 * This method scans each tuple passed by its child operator and evaluates it against all the WHERE clause passed. 
+	 * If it satisfies all the conditions/clause then it is returned back to be used for further operations or to be printed to file. 
+	 * @return tuple The tuple which satisfies the conditions specified in the SQL query
+	 */
+	@Override
+	public Tuple getNextTuple() {
+		
+		while(true) {
+			Tuple tuple = root.getNextTuple();
+			if(tuple==null) {
+				return null;
+			}
+			EvaluateSelection evalSelection = new EvaluateSelection(attributeHashIndex,tuple);
+
+			if(evalSelection.evaluate(whereCondition)) {
+				return tuple;
+			}
+		}
+	}
+
+	
+	/*
+	 * Method used to reset the state of the operator and ask it to return tuples from the very beginning. 
+	 */
+	@Override
+	public void reset() {
+		root.reset();	
+	}
+
+
+	/*
+	 * getter function to return the hash index. 
+	 * @return attributeHashIndex HashMap mapping table attributes to their corresponding integer position values
+	 */
+	@Override
+	protected Map<String, Integer> getAttributeHashIndex() {
+		return attributeHashIndex;
+	}
+
+
+
+	/*
+	 * Getter method to return the Name of the table
+	 * @return (String) returns the name of the table that is used passed to the child operator
+	 */	
+	@Override
+	protected String getTableName() {
+		return root.getTableName();
+	}
+
+}
+package ed.inf.adbs.blazedb.operator;
+
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Map;
+import ed.inf.adbs.blazedb.Tuple;
+import net.sf.jsqlparser.statement.select.OrderByElement;
+
+/*
+ * This class is for sorting the tuples as per the attributes mentioned in the ORDER BY clause.
+ * It first reads all the tuples from its child and then calls List.sort() using a custom comparator.
+ * Then sends the output tuple one by one to another operator or to be printed in the file. 
+ */
+public class SortOperator extends Operator{
+
+	private List<Tuple> sortBuffer;
+	private int index;
+	private Map<String, Integer> attributeHashIndex;
+	
+	/*
+	 * Constructor for sort operator. Since this is a blocking operator, it first reads all the information into a list of tuples. 
+	 * Then it invokes List.sort() function along with a custom comparator that sorts the list of tuples in ascending order. 
+	 * @param root The root or child operator passed from the invoking method
+	 * @param orderByElements Contains a list of column attributes to sort the tuples as per their values.
+	 * @param attributeHashIndex HashMap that maps table attributes to integers representing the attribute's position in the table
+	 */
+	public SortOperator(Operator root, List<OrderByElement> orderByElements, Map<String, Integer> attributeHashIndex) {
+		this.sortBuffer = new ArrayList<>();
+		this.index=0;
+		this.attributeHashIndex = attributeHashIndex;
+		
+		Tuple tuple;
+		while(     (tuple=root.getNextTuple())!=null    ) {
+			sortBuffer.add(tuple);
+		}
+		
+		//If no tuples are pulled from the child operator, avoid unnecessary computations and return immediately
+		if(sortBuffer.size()==0) {
+			return;
+		}
+		sortBuffer.sort(new TupleComparator(orderByElements, attributeHashIndex));
+	}
+	
+	
+	/*
+	 * Method to return the contents of sorted List of tuples row(tuple)wise. Since the List is already sorted above, here it is just being returned.
+	 * @return tuple It contains the tuple that is to be returned to the calling function
+	 */
+	@Override
+	public Tuple getNextTuple() {
+		
+		if (index < sortBuffer.size()) {
+            return sortBuffer.get(index++);
+        }
+        return null; //no more tuples to return..hence returning null;
+	}
+
+	/*
+	 * This method is not of much use here. But since it is a part of Operator class, it has to be created here
+	 */
+	@Override
+	public void reset() {
+		
+	}
+
+	
+	/*
+	 * getter function to return the attribute hash map containing mapping from attribute to integer positions in table
+	 * @return attributeHashIndex HashMap mapping table attributes to their corresponding integer position values
+	 */
+	@Override
+	protected Map<String, Integer> getAttributeHashIndex() {
+		// TODO Auto-generated method stub
+		return null;
+	}
+
+	/*
+	 * Getter method to return the name of the table
+	 * @return tableName Contains the name of the table to be returned
+	 */
+	@Override
+	protected String getTableName() {
+		return null ;
+	}
+
+}
+package ed.inf.adbs.blazedb.operator;
+
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import ed.inf.adbs.blazedb.Tuple;
+import net.sf.jsqlparser.expression.Expression;
+import net.sf.jsqlparser.expression.Function;
+import net.sf.jsqlparser.expression.operators.relational.ExpressionList;
+import net.sf.jsqlparser.statement.select.SelectItem;
+
+
+/*
+ * This class handles the GROUPBY() and SUM() operators in the given SQL code. 
+ * It primarily has three divisions - 1. Clauses containing only SUM() functions
+ * 									  2. Clauses containing only GROUP BY clauses
+ * 									  3. Clauses containing both SUM() and GROUP BY clauses
+ * 
+ * In the 1st case, I iterate over each entry in the SELECT clause and perform the sum in case there is just 1 column/number inside SUM().
+ * If there are more than 1 numbers/columns inside SUM, I iterate over them using a loop to first multiply them and later sum everything. 
+ * 
+ * In the 2nd case, I iterate over all the Attributes mentioned in GROUP BY clause. Then pick up all the attributes mentioned in the Select clause
+ * (as select can contain the subset of GROUP BY)into a tuple and later add this tuple into a HashMap
+ * (HashMap's key = all values of GROUPBY attributes of tuple, HashMap's value = The values of columns to be projected after GROUPBY)
+ * This helps to avoid duplicates and gives only those attributes that were asked to be projected after group by.
+ * 
+ * In the 3rd case, again I divide them into two 1. If the tuple is present in the HashMap(as a key) of group by elements
+ * 												 2. If the tuple is not present in the HashMap(as a key) of group by elements. 
+ * If it is not present, either add it directly or perform the product of terms and add it to the HashMap (as a value)
+ * If it is present, then extract the tuple based on the GROUP BY key, update the sum as sum + new tuple's values and put it back to HashMap (as a value)
+ * Using a HashMap allows to hold only unique values and at the same time allows to extract and update values
+ */
+public class SumOperator extends Operator{
+	
+	private Operator root;
+	private ExpressionList groupByClause;
+	private List<SelectItem<?>> selectClause;
+	private Map<String, Integer> attributeHashIndex;
+	private Map<String, Integer> projectedAttributeHashIndex;
+	private int index;
+	private List<Tuple> bufferTuples;
+	private List<Tuple> outputTuples;
+	
+	
+	/*
+	 * Constructor for SumOperator
+	 * @param root The child operator passed from the calling method
+	 * @param groupByClause The ExpressionList containing all the group by clauses mentioned in the input SQL file
+	 * @param selectClause The clauses mentioned after SELECT in the input SQL file. Used to see what columns need to be projected. 
+	 * @param attributesHashIndex HashMap that maps table attributes to integers representing the attribute's position in the table
+	 */
+	public SumOperator(Operator root, ExpressionList groupByClause, List<SelectItem<?>> selectClause, Map<String, Integer> attributesHashIndex) {
+		this.root = root;
+		this.groupByClause = groupByClause;
+		this.selectClause = selectClause;
+		this.attributeHashIndex = attributesHashIndex;
+		this.index = 0;
+		this.bufferTuples = new ArrayList<>();
+		this.outputTuples = new ArrayList<>();
+		this.projectedAttributeHashIndex = new HashMap<>();
+		
+		
+		groupTheTuples();
+	}
+	
+	/*
+	 * This method iterates through the tuples given by the child operator and decides which case of execution to proceed with. 
+	 * It checks the select clause and group by clause and decides one of the three ways to proceed. 
+	 * 		 1. Clauses containing only SUM() functions
+	 * 	     2. Clauses containing only GROUP BY clauses
+     * 		 3. Clauses containing both SUM() and GROUP BY clauses
+     * All the three methods put the final grouped by tuples into a List of tuples called outputTuples
+	 */
+	private void groupTheTuples() {
+		Tuple tuple;
+		while(     (tuple=root.getNextTuple())!=null    ) {
+			bufferTuples.add(tuple);
+		}
+		
+		
+		//if there are no tuples obtained from the child operator, return immediately and avoid all unnecessary computations below
+		if(bufferTuples.size()==0){
+			return;
+		}
+		
+		if(selectClause.toString().toLowerCase().contains("sum") && groupByClause == null) {
+			//This is a case where SUM() function is present but there is no GroupBy clause
+			onlySumClause();
+		}
+		
+		if( !selectClause.toString().toLowerCase().contains("sum") && groupByClause!=null ) {
+			//This is a case where SUM() function is not at all present by there is GroupBy clause
+			onlyGroupByClause();
+		}
+
+		if(selectClause.toString().toLowerCase().contains("sum") && groupByClause!=null) {
+			//This is the last case where both SUM() and GroupBy are present together
+			sumAndGroupBy();
+		}
+		
+	}
+	
+	
+	/*
+	 * A method to execute the SQL statements containing only SUM functions. 
+	 * It can either be of the form SUM(integer/column) or SUM(integer/column * integer/column [ * integer/column ...]) 
+	 * or mix of these two with any number of sum functions. 
+	 * 
+	 * Iterates over Select clause and performs the sum of necessary columns
+	 */
+	private void onlySumClause() {
+		
+		Tuple tupleToReturn = new Tuple();
+		//need to set just a tuple
+		//since group by clause is null, i can assume that there is no other selectitem apart from sum(s)
+		int sum=0, evalSumExpr=1, count=0;
+		
+		for(SelectItem<?> sumItem : selectClause) {
+			evalSumExpr=1;
+			sum=0;
+			if(sumItem instanceof SelectItem) {										
+				Expression exp = ((SelectItem)sumItem).getExpression();
+				if (exp instanceof Function && exp.toString().toLowerCase().contains("sum")) {
+                    Function function = (Function) exp;
+
+                    Expression parameters = function.getParameters();
+                    
+                    if(!parameters.toString().contains("*")) {
+                    	//Does not contain * which means its either sum(number) or sum(column)
+                    	
+                    	//If it contains column
+                    	if(attributeHashIndex.containsKey(parameters.toString().toLowerCase())) {
+                    		for( Tuple tempTuple : bufferTuples) {
+                    			sum += tempTuple.get(attributeHashIndex.get(parameters.toString().toLowerCase()));
+
+                    		}
+                    	}
+                    	
+                    	//If it contains a single number inside brackets
+                    	else {
+                    		evalSumExpr = Integer.parseInt(parameters.toString());
+                            sum = bufferTuples.size()*evalSumExpr;
+
+                    	}
+                    }
+                    else {
+                    	//In this case we check for either sum(number * number [* number ...]) or sum(column * column [* column...]) or mix of two
+                    	int ans=1, number=0;
+                    	sum=0;
+                    	evalSumExpr=1;
+                    	String[] numbers = parameters.toString().split("\\*");
+                    	
+                    	for ( Tuple currentTuple : bufferTuples) {
+                    		ans=1;
+                    		for(String individualNums : numbers) {
+                        		individualNums = individualNums.strip();
+                        		
+                        		//If it is a column reference
+                        		if(attributeHashIndex.containsKey(individualNums.toLowerCase())) {
+                        			number = currentTuple.get(attributeHashIndex.get(individualNums.toLowerCase()));
+                        		}
+                        		else {
+                        			//If it is a number inside
+                        			number = Integer.parseInt(individualNums);
+                        		}
+                        		ans = ans * number;
+                        	}
+                    		sum = sum + ans;
+                    	}	
+                    }//calculate the sum based on the number of tuples in bufferTuple
+				}
+				else{
+					return;
+				}
+				
+			}
+			tupleToReturn.add(sum);
+			projectedAttributeHashIndex.put(sumItem.toString().toLowerCase(), count++);
+		}
+		outputTuples.add(tupleToReturn);
+		
+	}
+	
+	
+	/*
+	 * Method to handle queries containing only the GROUP BY clause. It does not contain any SUM() function at all
+	 * Did not do an explicit check to verify if the condition in select clause matches the condition in group by clause.
+	 * For a valid SQL statement, Select must contain a subset of group by. Using this to proceed. 
+	 */
+	private void onlyGroupByClause() {
+
+		HashMap<Tuple, Tuple> groupByTuples = new HashMap<Tuple, Tuple>();
+		
+		for (Tuple scannedTuple : bufferTuples) {
+			Tuple tupleHashValue = new Tuple();
+			Tuple tupleHashKey = new Tuple();
+			for(Object groupByObj : groupByClause ) {
+				
+				//This if clause helps to filter out attributes which are present in GroupBy but not in Select
+				if(selectClause.toString().toLowerCase().contains(groupByObj.toString().toLowerCase())) {
+					tupleHashValue.add(   scannedTuple.get(   attributeHashIndex.get(   groupByObj.toString().toLowerCase()  )    )   );
+				}
+				tupleHashKey.add(scannedTuple.get(   attributeHashIndex.get(   groupByObj.toString().toLowerCase()  )    ));
+			}
+			groupByTuples.put(tupleHashKey, tupleHashValue);
+
+		}
+		
+		int count=0;
+		//Put this in a new loop because it needs to execute the loop only once. 
+		//In the earlier instance the inner loop is a part of a bigger FOR loop
+		for(Object groupByObj : groupByClause ) {
+			if(selectClause.toString().toLowerCase().contains(groupByObj.toString().toLowerCase())) {
+
+			projectedAttributeHashIndex.put(groupByObj.toString().toLowerCase(), count++);
+			}
+		}
+		for (Map.Entry<Tuple, Tuple> entry : groupByTuples.entrySet()) {
+			outputTuples.add(entry.getValue());
+
+		}
+		
+	}
+	
+	
+	
+	/*
+	 * Method to handle queries having both SUM() and GROUP BY clauses.
+	 * This feels like a large monolithic block of code but I kept it as is because it encapsulates distinct logic of handling both SUM & GROUPBY
+	 * For this submission, I prioritized stability of this code block over further refactoring.
+	 */
+	private void sumAndGroupBy(){
+		
+		HashMap<Tuple, Tuple> uniqueTuples = new HashMap<Tuple, Tuple>();
+
+		//Mix of both. So, first need to group by and then apply the sum. 
+		for (Tuple scannedTuple: bufferTuples) {
+			Tuple tupleHashKey = new Tuple();
+			
+			for(Object obj : groupByClause) {
+				tupleHashKey.add(scannedTuple.get(attributeHashIndex.get(obj.toString().toLowerCase())));
+			}
+			Tuple tupleHashValue = new Tuple();
+			int colValue=0;
+			
+			
+			if(uniqueTuples.containsKey(tupleHashKey))
+			{
+				Tuple presentTuple = uniqueTuples.get(tupleHashKey);
+				int presentValue = 0;
+				for (SelectItem<?> item : selectClause) {
+					Expression exp = ((SelectItem)item).getExpression();
+					if(exp instanceof Function) {
+						Function function = (Function) exp;
+						
+						Expression parameters = function.getParameters();
+						String[] stringParameters= parameters.toString().split("\\*");
+						if(stringParameters.length==1) {
+	                    	
+	                    	try {
+	                    		colValue = Integer.parseInt(stringParameters[0].strip());
+	                    	}catch(Exception e) {
+	                    		colValue = scannedTuple.get(attributeHashIndex.get(stringParameters[0].toLowerCase()));
+	                    	}
+	                    	
+	                    	
+	                    	presentValue = presentTuple.get(projectedAttributeHashIndex.get(exp.toString().toLowerCase()));
+	                    	tupleHashValue.add(presentValue+colValue);
+	                    }
+						else {
+							//It means parameters are more than 1
+							int product=1;
+							for (String indvParams : stringParameters) {
+
+	                    		try {
+	                    			colValue = Integer.parseInt(indvParams.strip());
+	                    			product = product * colValue;
+	                    		}catch(Exception e) {
+	                    			colValue = scannedTuple.get(attributeHashIndex.get(indvParams.strip().toLowerCase()));
+	                    			product = product * colValue;
+	                    		}
+	                    	}
+							
+	                    	presentValue = presentTuple.get(projectedAttributeHashIndex.get(exp.toString().toLowerCase()));
+	                    	tupleHashValue.add(product+presentValue);
+						}
+					}
+					else {
+						//it is not a function at all.. which means a normal column that must be summed here. 
+						colValue=scannedTuple.get(attributeHashIndex.get(exp.toString().toLowerCase()));
+						tupleHashValue.add(colValue);
+					}
+					
+				}
+				uniqueTuples.put(tupleHashKey, tupleHashValue);
+
+			}
+			else
+			{
+				int counter=0;
+				//Iterate over the select clause and select the columns to be put into it
+				for (SelectItem<?> item: selectClause) {
+					
+					Expression exp = ((SelectItem)item).getExpression();
+
+					if(exp instanceof Function) {
+						//eg sum(integer) or sum(column)
+						Function function = (Function) exp;
+												
+                        Expression parameters = function.getParameters();
+                        
+                        String[] stringParameters= parameters.toString().split("\\*");
+	                    
+	                    if(stringParameters.length==1) {
+	                    	
+	                    	try {
+	                    		colValue = Integer.parseInt(stringParameters[0].strip());
+	                    	}catch(Exception e) {
+	                    		colValue = scannedTuple.get(attributeHashIndex.get(stringParameters[0].toLowerCase()));
+	                    	}
+	                    	tupleHashValue.add(colValue);
+	                    	projectedAttributeHashIndex.putIfAbsent(  exp.toString().toLowerCase(), counter++  );
+	                    	
+	                    	
+	                    	
+	                    }
+	                    else {
+	                    	//It means the parameters are more than one
+	                    	//we do not know if it is a column value of integer.. so iterate over all and check in each chase
+	                    	int product = 1;
+	                    	for (String indvParams : stringParameters) {
+
+	                    		try {
+	                    			colValue = Integer.parseInt(indvParams.strip());
+	                    			product = product * colValue;
+	                    		}catch(Exception e) {
+	                    			colValue = scannedTuple.get(attributeHashIndex.get(indvParams.strip().toLowerCase()));
+	                    			product = product * colValue;
+	                    		}
+	                    	}
+	                    	tupleHashValue.add(product);
+	                    	projectedAttributeHashIndex.putIfAbsent(  exp.toString().toLowerCase(), counter++  );
+	                    }
+					}
+					else
+					{
+						//since it is not a function it has to be a normal column of the table
+						colValue=scannedTuple.get(attributeHashIndex.get(exp.toString().toLowerCase()));
+						tupleHashValue.add(colValue);
+						
+                    	projectedAttributeHashIndex.putIfAbsent(  exp.toString().toLowerCase(), counter++  );
+                    	//This else block executes in case a constant is passed after SELECT eg. SELECT 5 FROM Student. 
+                    	//But since its stated SELECT clause will either specify a subset of columns or have the form SELECT *, I have not included a check for plain integers.
+                    	
+					}
+				}
+				uniqueTuples.put(tupleHashKey, tupleHashValue);
+			}
+		}
+
+		for (Map.Entry<Tuple, Tuple> entry : uniqueTuples.entrySet()) {
+			outputTuples.add(entry.getValue());
+		}
+	}
+
+	
+	
+	/*
+	 * Method that returns the tuples one by one after GROUPING and/or SUMMING over specified attributes.
+	 * Since SumOperator is a blocking operator, it does all the calculations beforehand and only returns the tuples one by one in this method
+	 * @return (tuple) The tuple in the sequential order of the table.
+	 */
+	@Override
+	public Tuple getNextTuple() {
+		
+		if (index < outputTuples.size()) {
+            return outputTuples.get(index++);
+        }
+        return null; 
+	}
+
+	
+	/*
+	 * Method used to reset the state of the operator and ask it to return tuples from the very beginning. 
+	 */
+	@Override
+	public void reset() {
+		root.reset();
+	}
+
+	/*
+	 * getter function to return the hash index (schema of the table after projection). 
+	 * @return projectedAttributeHashIndex HashMap mapping table attributes to their corresponding integer position values after projection
+	 */
+	@Override
+	protected Map<String, Integer> getAttributeHashIndex() {
+		return this.projectedAttributeHashIndex;
+	}
+
+	
+	/*
+	 * Getter method to return the Name of the table
+	 * @return (String) returns the name of the table that is used passed to the child operator
+	 */
+	@Override
+	protected String getTableName() {
+		return root.getTableName();
+	}
+
+}
+package ed.inf.adbs.blazedb.operator;
+
+import java.util.Comparator;
+import java.util.List;
+import java.util.Map;
+import ed.inf.adbs.blazedb.Tuple;
+import net.sf.jsqlparser.statement.select.OrderByElement;
+
+/*
+ * This class handles the job of comparing two tuples (list of integers)
+ * This is used by the Sort Operator as a custom comparator function while invoking List.sort() method. 
+ */
+public class TupleComparator implements Comparator<Tuple> {
+	
+    private List<OrderByElement> orderByElements;
+    private Map<String, Integer> attributeHashIndex;
+    
+    /*
+     * This is the Constructor method. 
+     * @param orderByElements Contains a list of column attributes to sort the tuples as per their values.
+     * @param attributeHashIndex It is a HashMap that maps table attributes to integers representing the attribute's position in the table
+     */
+    public TupleComparator(List<OrderByElement> orderByElements, Map<String, Integer> attributeHashIndex) {
+        this.orderByElements = orderByElements;
+        this.attributeHashIndex = attributeHashIndex;
+    }
+    
+    /*
+     * Method used to compare the two passed tuples. 
+     * It returns 0 if both tuples are equal, 1 if 1st tuple is greater, and -1 if 1st tuple is smaller.
+     * @param tuple1 The first tuple to be compared
+     * @param tuple2 The second tuple to be compared
+     */
+	@Override
+	public int compare(Tuple tuple1, Tuple tuple2) {
+		
+		for (OrderByElement orderBy : orderByElements) {
+            String columnName = orderBy.getExpression().toString().toLowerCase();
+
+            int index = attributeHashIndex.get(columnName.toLowerCase());
+            int tupleOneVal = tuple1.get(index);
+            int tupleTwoVal = tuple2.get(index);
+
+            int comparisonResult = Integer.compare(tupleOneVal, tupleTwoVal);
+            if (comparisonResult != 0) { 
+                return comparisonResult;
+            }      
+        }
+		return 0;
+	}
+
+}

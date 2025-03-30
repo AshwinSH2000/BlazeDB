@@ -9,18 +9,21 @@ import java.util.List;
  */
 public class TableInfo {
 	String tableName;
-	List <String> attributes;
+	List<String> attributes;
 	String path;
-	
+
 	/*
-	 * This is a constructor that loads the object with the data that is read from schema.txt
+	 * This is a constructor that loads the object with the data that is read from
+	 * schema.txt
 	 * 
 	 * @param tablename The name of the table read in the schema.txt file
+	 * 
 	 * @param attributes The list of attributes corresponding to the above table
-	 * @param path The file path where the table can be found	
+	 * 
+	 * @param path The file path where the table can be found
 	 */
 	public TableInfo(String tablename, List<String> attributes, String path) {
-		this.tableName =  tablename;
+		this.tableName = tablename;
 		this.attributes = attributes;
 		this.path = path;
 	}

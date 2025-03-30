@@ -11,21 +11,25 @@ import ed.inf.adbs.blazedb.Tuple;
  */
 public abstract class Operator {
 
-    /**
-     * Retrieves the next tuple from the iterator.
-     * @return A Tuple object representing the row of data, or NULL if EOF reached.
-     */
-    public abstract Tuple getNextTuple();
+	/**
+	 * Retrieves the next tuple from the iterator.
+	 * 
+	 * @return A Tuple object representing the row of data, or NULL if EOF reached.
+	 */
+	public abstract Tuple getNextTuple();
 
-    /**
-     * Resets the iterator to the start.
-     */
-    public abstract void reset();
+	/**
+	 * Resets the iterator to the start.
+	 */
+	public abstract void reset();
 
-    /**
-     * To get the details of the mapping between column name and corresponding integer
-     * @return A hashMap with attributes as keys and its integer position in the schema
-     */
+	/**
+	 * To get the details of the mapping between column name and corresponding
+	 * integer
+	 * 
+	 * @return A hashMap with attributes as keys and its integer position in the
+	 *         schema
+	 */
 	protected abstract Map<String, Integer> getAttributeHashIndex();
 
 	/*
