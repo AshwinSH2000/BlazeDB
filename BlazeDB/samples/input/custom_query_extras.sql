@@ -1,4 +1,23 @@
+SELECT ENROLLED.H, COURSE.F FROM STUDENT, ENROLLED, COURSE GROUP BY STUDENT.A, ENROLLED.H, COURSE.F order by Course.f, enrolled.h;
 Select * from student, course, enrolled where course.e = enrolled.e and course.f = enrolled.a and student.a = enrolled.a order by student.b, enrolled.e;
+--SELECT ENROLLED.H FROM STUDENT, ENROLLED, COURSE GROUP BY STUDENT.A, ENROLLED.H, COURSE.F;
+--SELECT STUDENT.A, ENROLLED.H, COURSE.F FROM STUDENT, ENROLLED, COURSE GROUP BY STUDENT.A, ENROLLED.H, COURSE.F order by Course.f, enrolled.h, student.a;
+--SELECT SUM(Student.A*Student.B), SUM(Student.C*Student.D), SUM(Student.D*3) from STUDENT;
+--SELECT DISTINCT Student.A, Enrolled.E from Student, Enrolled WHERE STUDENT.A != 3 AND STUDENT.A > 3 AND STUDENT.A !=6 order by Enrolled.E;
+--SELECT SUM(1), SUM(Student.A*Course.g) FROM Student, Enrolled, Course
+--SELECT Enrolled.E, SUM(Enrolled.H * Enrolled.e) FROM Enrolled GROUP BY Enrolled.E;
+--SELECT * FROM COURSE, ENROLLED where course.f = enrolled.a and course.e =enrolled.e;
+--SELECT DISTINCT Enrolled.A from Enrolled;
+--SELECT Student.A, Enrolled.E FROM Student, Enrolled WHERE Student.A <= 4 AND Student.A = Enrolled.A AND Enrolled.H < 50;
+--SELECT Student.A, Enrolled.E, Course.F FROM Student, Enrolled, Course WHERE Student.A = Enrolled.A AND Enrolled.E = Course.E AND Student.B > 150 AND Course.F < 5;
+--SELECT Student.A, Enrolled.E, Course.F, Course.G FROM Student, Enrolled, Course WHERE Student.A = Enrolled.A AND Enrolled.E = Course.E AND Student.B > 150 AND Course.F != 5;
+--SELECT Student.A, SUM(Student.B*Student.C) FROM Student GROUP BY Student.A;
+--SELECT SUM(STUDENT.A) FROM STUDENT GROUP BY STUDENT.A ORDER BY SUM(STUDENT.A);
+--SELECT distinct STuDenT.d FROM COurSE, Enrolled, Student where student.d>34 group by studenT.b, studeNT.c, STuDenT.d;
+--SELECT student.b,course.f FROM Student, Course GROUP BY student.b, course.f order by student.b, course.f;
+--SELECT SUM(1) FROM Student GROUP BY Student.B;
+--SELECT Student.D from Student Group by student.A, student.d;
+--SELECT * FROM STUDENT, COURSE;
 
 --SELECT * FROM Student, Enrolled, Course;
 --SELECT Student.A, Enrolled.E FROM Student, Enrolled WHERE Student.A = Enrolled.A;

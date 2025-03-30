@@ -24,9 +24,12 @@ public abstract class Operator {
 
     /**
      * To get the details of the mapping between column name and corresponding integer
-     * @return A hashmap with attributes as keys and its integer position in the schema
+     * @return A hashMap with attributes as keys and its integer position in the schema
      */
 	protected abstract Map<String, Integer> getAttributeHashIndex();
 
+	/*
+	 * To return the name of the table calling this operator
+	 */
 	protected abstract String getTableName();
 }

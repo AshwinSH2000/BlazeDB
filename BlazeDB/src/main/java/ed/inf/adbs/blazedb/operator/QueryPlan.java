@@ -34,7 +34,7 @@ import net.sf.jsqlparser.expression.operators.conditional.AndExpression;
 public class QueryPlan {
 	
 	/*
-	 * @param - all the parsed pieces of sql code, NEED TO CHECK if i need to pass anymore.
+	 * @param - all the parsed pieces of SQL code, NEED TO CHECK if i need to pass anymore.
 	 * @return - nothing, as of now. but might need to change it to be Operator I think, not sure. 
 	 */
 	

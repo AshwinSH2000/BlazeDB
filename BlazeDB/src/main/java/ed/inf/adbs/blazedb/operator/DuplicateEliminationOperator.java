@@ -58,9 +58,8 @@ public class DuplicateEliminationOperator extends Operator{
 	}
 
 	/*
-	 * This is a method used to return the root's HashMap that contains a mapping from Column Names to integers representing 
-	 * the respective column's position in the tuple.
-	 * 
+	 * This is a method used to return the root's HashMap that contains a mapping from table attributes to integers representing 
+	 * the respective attribute's position in the tuple.
 	 * @return root.attributeHashIndex() The hashMap returned by the root's getAttributeHashIndex() method is returned by this method. 
 	 */
 	@Override
@@ -71,7 +70,6 @@ public class DuplicateEliminationOperator extends Operator{
 
 	/*
 	 * Method used to return the root's (child) tableName
-	 * 
 	 * @return The name of the table the root of this operator is referring to. 
 	 */
 	@Override

@@ -87,7 +87,6 @@ public class BlazeDB {
 
 				//Parsing and extracting all the part of the SQL query
 				SELECT=select.getPlainSelect().getSelectItems();
-				List<SelectItem<?>> x =select.getPlainSelect().getSelectItems();
 				FROM=select.getPlainSelect().getFromItem();
 				JOIN=select.getPlainSelect().getJoins();
 				WHERE=select.getPlainSelect().getWhere();
