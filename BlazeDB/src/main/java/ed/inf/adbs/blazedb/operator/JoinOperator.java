@@ -169,6 +169,7 @@ public class JoinOperator extends Operator {
 	 * values from left and right operands
 	 */
 	private boolean compareValues(ComparisonOperator operator, String leftCol, String rightCol) {
+		
 		Comparable leftValue = leftTuple.get(leftAttributeHashIndex.get(leftCol.toLowerCase()));
 		Comparable rightValue = rightTuple.get(rightAttributeHashIndex.get(rightCol.toLowerCase()));
 

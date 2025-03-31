@@ -91,7 +91,7 @@ public class QueryPlan {
 				}
 
 				else { // Handles the case where SUM and/or GROUPBY is present
-					root = new SumOperator(root, GROUPBY, SELECT, attributeHashIndex, combinedTableNames);
+					root = new SumOperator(root, GROUPBY, SELECT, attributeHashIndex, combinedTableNames, WHERE);
 					attributeHashIndex = root.getAttributeHashIndex();
 				}
 
@@ -128,16 +128,16 @@ public class QueryPlan {
 			//*//
 			// This cannot be applied to GROUPBY because there may be some attributes that
 			// are necessary for grouping but not present in select.
-			if (!SELECT.toString().contains("[*]")) {
-				if (!SELECT.toString().toLowerCase().contains("sum") && GROUPBY == null) {
-					// Handling projection of column attributes only.
-					leftChild = new ProjectionOperator(leftChild, SELECT, attributeHashIndex_lChild);
-					// Pulling the new attribute hash index(schema) containing the projected columns
-					// only
-
-					attributeHashIndex_lChild = leftChild.getAttributeHashIndex();
-				}
-			}
+//			if (!SELECT.toString().contains("[*]")) {
+//				if (!SELECT.toString().toLowerCase().contains("sum") && GROUPBY == null) {
+//					// Handling projection of column attributes only.
+//					leftChild = new ProjectionOperator(leftChild, SELECT, attributeHashIndex_lChild);
+//					// Pulling the new attribute hash index(schema) containing the projected columns
+//					// only
+//
+//					attributeHashIndex_lChild = leftChild.getAttributeHashIndex();
+//				}
+//			}
 			
 			//*//
 			for (Join join : JOIN) {
@@ -148,15 +148,15 @@ public class QueryPlan {
 			//*//
 				// This cannot be applied to GROUPBY because there may be some attributes that
 				// are necessary for grouping but not present in select.
-				if (!SELECT.toString().contains("[*]")) {
-					if (!SELECT.toString().toLowerCase().contains("sum") && GROUPBY == null) {
-						// Handling projection of column attributes only.
-						rightChild = new ProjectionOperator(rightChild, SELECT, attributeHashIndex_rChild);
-						// Pulling the new attribute hash index(schema) containing the projected columns
-						// only
-						attributeHashIndex_rChild = rightChild.getAttributeHashIndex();
-					}
-				}
+//				if (!SELECT.toString().contains("[*]")) {
+//					if (!SELECT.toString().toLowerCase().contains("sum") && GROUPBY == null) {
+//						// Handling projection of column attributes only.
+//						rightChild = new ProjectionOperator(rightChild, SELECT, attributeHashIndex_rChild);
+//						// Pulling the new attribute hash index(schema) containing the projected columns
+//						// only
+//						attributeHashIndex_rChild = rightChild.getAttributeHashIndex();
+//					}
+//				}
 				//*//		
 
 				if (!(WHERE == null)) {
@@ -204,7 +204,7 @@ public class QueryPlan {
 					// only
 					attributeHashIndex_lChild = leftChild.getAttributeHashIndex();
 				} else { // Presence of SUM and/or GROUPBY
-					leftChild = new SumOperator(leftChild, GROUPBY, SELECT, attributeHashIndex_lChild, combinedTableNames);
+					leftChild = new SumOperator(leftChild, GROUPBY, SELECT, attributeHashIndex_lChild, combinedTableNames, WHERE);
 					// Pulling the new attribute hash index(Schema) containing the projected columns
 					// only
 					attributeHashIndex_lChild = leftChild.getAttributeHashIndex();

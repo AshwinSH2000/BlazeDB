@@ -1,3 +1,48 @@
+--SELECT SUM(1), SUM(Enrolled.a) FROM Enrolled, Course, Course2, Enrolled2, Student, Student2, Teaches, teaches2;
+--SELECT SUM(1), SUM(10*10) FROM Student2, Course2, Enrolled2, Enrolled;
+
+--SELECT ENROLLED.H, Course.f FROM STUDENT, ENROLLED, COURSE GROUP BY STUDENT.A, ENROLLED.H, COURSE.F order by enrolled.h, course.f;
+
+--SELECT Student.A, Enrolled.H FROM Course, Student, Enrolled;
+--SELECT StudenT.A, EnroLLED.H FROM CouRce, STuDenT, ENROLLed;
+
+--SELECT SUM(1), SUM(2) FROM Enrolled, Course, Course2, Enrolled2, Student, Student2, Teaches, teaches2;
+--select  enrolled.a,enrolled.e from enrolled, enrolled2;
+--SELECT teaches.p, Student2.A, Enrolled.H FROM Student, Student2, Course, Course2, Enrolled, Enrolled2, teaches, teaches2;
+--SELECT teaches.p FROM Student, Student2, Course, Course2, Enrolled, Enrolled2, teaches, teaches2 Group by teaches.p, student.a, course.g, enrolled.h, course2.e, teaches2.m,  enrolled2.e order by teaches.p;
+
+--SELECT Student.A, Enrolled.E from Student, Enrolled Where Student.A=2;
+--SELECT teaches.p, SUM(1), SUM(Course2.E*Enrolled2.A), SUM(Student.C * 2) FROM Student, Student2, Course, Course2, Enrolled, Enrolled2, teaches, teaches2 Group by teaches.p, student.a, course.g, enrolled.h, course2.e, teaches2.m,  enrolled2.e order by teaches.p;
+--SELECT SUM(1), SUM(Course2.E*Enrolled2.A), SUM(Student.C * 2) FROM Student, Student2, Course, Course2, Enrolled, Enrolled2, teaches, teaches2 Group by teaches.p, student.a, course.g, enrolled.h, course2.e;
+--SELECT SUM(1), SUM(Course2.E*Enrolled2.A), SUM(Student.C * 2) FROM Student, Student2, Course, Course2, Enrolled, Enrolled2, teaches, teaches2 Group by teaches.p, student.a;
+--SELECT SUM(1), SUM(Course2.E*Enrolled2.A), SUM(Student.C * 2) FROM Student, Student2, Course, Course2, Enrolled, Enrolled2, teaches;
+
+--SELECT SUM(1), SUM(Course2.E*Enrolled2.A), SUM(Student.C * 2) FROM Student, Student2, Course, Course2, Enrolled, Enrolled2;
+--SELECT SUM(1), SUM(Course.E*Course2.F), SUM(Student.C * Course.G) FROM Student, Student2, Course, Course2, Enrolled, Enrolled2;
+--SELECT COURSE.F, SUM(1) FROM STUDENT, ENROLLED, COURSE GROUP BY STUDENT.A, ENROLLED.H, COURSE.F order by COURSE.F;--SELECT ENROLLED.H FROM STUDENT, ENROLLED, COURSE GROUP BY STUDENT.A, ENROLLED.H, COURSE.F;--SELECT Student.A, Enrolled.E, Course.F, Course.G FROM Student, Enrolled, Course WHERE Student.A = Enrolled.A AND Enrolled.E = Course.E AND Student.B > 150 AND Course.F != 5;
+--SELECT Student.A, Enrolled.E, Course.F FROM Student, Enrolled, Course WHERE Student.A = Enrolled.A AND Enrolled.E = Course.E AND Student.B > 150 AND Course.F < 5;
+--SELECT Student.A, Enrolled.E FROM Student, Enrolled WHERE Student.A <= 4 AND Student.A = Enrolled.A AND Enrolled.H < 50;
+--SELECT Student.A, Enrolled.E FROM Student, Enrolled WHERE Student.A >= 4 AND Student.A = Enrolled.A AND Enrolled.H < 50;
+--SELECT Student.A, Enrolled.E FROM Student, Enrolled WHERE Student.A > 4 AND Student.A = Enrolled.A AND Enrolled.H < 50;
+--SELECT Student.A, Enrolled.E FROM Student, Enrolled WHERE Student.A = Enrolled.A AND Student.A > 4;
+--SELECT Student.A, Enrolled.E FROM Student, Enrolled WHERE  Student.A != 4 AND Student.A = Enrolled.A;
+--SELECT Student.A, Enrolled.E FROM Student, Enrolled WHERE  Student.A > 4 AND Student.A = Enrolled.A;
+--SELECT DISTINCT Student.A, Enrolled.E FROM Student, Enrolled WHERE Student.A = Enrolled.A;
+--SELECT * FROM Course;
+--SELECT * FROM Student, Enrolled;
+--SELECT * FROM Student, Enrolled WHERE Student.A > 4 AND Enrolled.H < 50;
+--SELECT * FROM Student, Enrolled WHERE Student.A > 4
+--SELECT Student.A, Enrolled.E FROM Student, Enrolled WHERE Student.A = Enrolled.A;
+--SELECT ENROLLED.H FROM STUDENT, ENROLLED, COURSE GROUP BY STUDENT.A, ENROLLED.H, COURSE.F;
+--SELECT COURSE.F, SUM(1) FROM STUDENT, ENROLLED, COURSE GROUP BY STUDENT.A, ENROLLED.H, COURSE.F order by COURSE.F;
+--SELECT * FROM Student WHERE 4=Student.A;
+--SELECT * FROM Student, Course WHERE Student.C < Course.E ORDER by Student.a, Course.f;
+--SELECT * FROM Student, Course;
+--SELECT ENROLLED.H FROM STUDENT, ENROLLED, COURSE GROUP BY STUDENT.A, ENROLLED.H, COURSE.F order by ENROLLED.H;
+--SELECT COURSE.F, SUM(1) FROM STUDENT, ENROLLED, COURSE GROUP BY STUDENT.A, ENROLLED.H, COURSE.F order by COURSE.F;
+--SELECT SUM(1) FROM STUDENT, ENROLLED, COURSE GROUP BY STUDENT.A, ENROLLED.H, COURSE.F;
+--SELECT ENROLLED.H, SUM(Course.g) FROM STUDENT, ENROLLED, COURSE GROUP BY STUDENT.A, ENROLLED.H, COURSE.F order by enrolled.h;
+
 SELECT ENROLLED.H, COURSE.F FROM STUDENT, ENROLLED, COURSE GROUP BY STUDENT.A, ENROLLED.H, COURSE.F order by Course.f, enrolled.h;
 Select * from student, course, enrolled where course.e = enrolled.e and course.f = enrolled.a and student.a = enrolled.a order by student.b, enrolled.e;
 --SELECT ENROLLED.H FROM STUDENT, ENROLLED, COURSE GROUP BY STUDENT.A, ENROLLED.H, COURSE.F;

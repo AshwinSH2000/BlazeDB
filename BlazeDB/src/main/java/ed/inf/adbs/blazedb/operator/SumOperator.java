@@ -14,19 +14,22 @@ import net.sf.jsqlparser.statement.select.SelectItem;
 
 /*
  * This class handles the GROUPBY() and SUM() operators in the given SQL code. 
- * It primarily has three divisions - 1. Clauses containing only SUM() functions
- * 									  2. Clauses containing only GROUP BY clauses
- * 									  3. Clauses containing both SUM() and GROUP BY clauses
+ * It primarily has four divisions - 1. An optimisation case where Select has only SUM(integer) or SUM(product of ints)
+ * 									  2. Clauses containing only SUM() functions
+ * 									  3. Clauses containing only GROUP BY clauses
+ * 									  4. Clauses containing both SUM() and GROUP BY clauses
  * 
- * In the 1st case, I iterate over each entry in the SELECT clause and perform the sum in case there is just 1 column/number inside SUM().
+ * In the 1st case, since the actual data does not matter, I iterate over each table to count the number of rows using ScanOperator.
+ * Then multiply all these to get the number of rows in the final table (cross join case)
+ * In the 2nd case, I iterate over each entry in the SELECT clause and perform the sum in case there is just 1 column/number inside SUM().
  * If there are more than 1 numbers/columns inside SUM, I iterate over them using a loop to first multiply them and later sum everything. 
  * 
- * In the 2nd case, I iterate over all the Attributes mentioned in GROUP BY clause. Then pick up all the attributes mentioned in the Select clause
+ * In the 3rd case, I iterate over all the Attributes mentioned in GROUP BY clause. Then pick up all the attributes mentioned in the Select clause
  * (as select can contain the subset of GROUP BY)into a tuple and later add this tuple into a HashMap
  * (HashMap's key = all values of GROUPBY attributes of tuple, HashMap's value = The values of columns to be projected after GROUPBY)
  * This helps to avoid duplicates and gives only those attributes that were asked to be projected after group by.
  * 
- * In the 3rd case, again I divide them into two 1. If the tuple is present in the HashMap(as a key) of group by elements
+ * In the 4th case, again I divide them into two 1. If the tuple is present in the HashMap(as a key) of group by elements
  * 												 2. If the tuple is not present in the HashMap(as a key) of group by elements. 
  * If it is not present, either add it directly or perform the product of terms and add it to the HashMap (as a value)
  * If it is present, then extract the tuple based on the GROUP BY key, update the sum as sum + new tuple's values and put it back to HashMap (as a value)
@@ -43,6 +46,7 @@ public class SumOperator extends Operator {
 	private List<Tuple> bufferTuples;
 	private List<Tuple> outputTuples;
 	private List<String> combinedTableNames;
+	private Expression whereClause;
 
 	/*
 	 * Constructor for SumOperator
@@ -59,7 +63,7 @@ public class SumOperator extends Operator {
 	 * representing the attribute's position in the table
 	 */
 	public SumOperator(Operator root, ExpressionList groupByClause, List<SelectItem<?>> selectClause,
-			Map<String, Integer> attributesHashIndex, List<String> combinedTableNames) {
+			Map<String, Integer> attributesHashIndex, List<String> combinedTableNames, Expression WHERE) {
 		this.root = root;
 		this.groupByClause = groupByClause;
 		this.selectClause = selectClause;
@@ -69,6 +73,7 @@ public class SumOperator extends Operator {
 		this.outputTuples = new ArrayList<>();
 		this.combinedTableNames = combinedTableNames;
 		this.projectedAttributeHashIndex = new HashMap<>();
+		this.whereClause = WHERE;
 
 		groupTheTuples();
 	}
@@ -100,7 +105,7 @@ public class SumOperator extends Operator {
 		Tuple result = new Tuple();
 
 		if (selectClause.toString().toLowerCase().contains("sum") && checkForTables(selectClause, combinedTableNames)
-				&& groupByClause == null) {
+				&& groupByClause == null && whereClause==null) {
 			int product = 1;
 			for (String table : combinedTableNames) {
 				ScanOperator scan = new ScanOperator(table);
