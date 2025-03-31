@@ -8,6 +8,8 @@ import ed.inf.adbs.blazedb.Tuple;
 import net.sf.jsqlparser.expression.Expression;
 import net.sf.jsqlparser.expression.Function;
 import net.sf.jsqlparser.expression.operators.relational.ExpressionList;
+import net.sf.jsqlparser.statement.select.FromItem;
+import net.sf.jsqlparser.statement.select.Join;
 import net.sf.jsqlparser.statement.select.SelectItem;
 
 /*
@@ -40,6 +42,7 @@ public class SumOperator extends Operator {
 	private int index;
 	private List<Tuple> bufferTuples;
 	private List<Tuple> outputTuples;
+	private List<String> combinedTableNames;
 
 	/*
 	 * Constructor for SumOperator
@@ -56,7 +59,7 @@ public class SumOperator extends Operator {
 	 * representing the attribute's position in the table
 	 */
 	public SumOperator(Operator root, ExpressionList groupByClause, List<SelectItem<?>> selectClause,
-			Map<String, Integer> attributesHashIndex) {
+			Map<String, Integer> attributesHashIndex, List<String> combinedTableNames) {
 		this.root = root;
 		this.groupByClause = groupByClause;
 		this.selectClause = selectClause;
@@ -64,6 +67,7 @@ public class SumOperator extends Operator {
 		this.index = 0;
 		this.bufferTuples = new ArrayList<>();
 		this.outputTuples = new ArrayList<>();
+		this.combinedTableNames = combinedTableNames;
 		this.projectedAttributeHashIndex = new HashMap<>();
 
 		groupTheTuples();
@@ -73,9 +77,14 @@ public class SumOperator extends Operator {
 	 * This method iterates through the tuples given by the child operator and
 	 * decides which case of execution to proceed with. It checks the select clause
 	 * and group by clause and decides one of the three ways to proceed. 1. Clauses
-	 * containing only SUM() functions 2. Clauses containing only GROUP BY clauses
-	 * 3. Clauses containing both SUM() and GROUP BY clauses All the three methods
-	 * put the final grouped by tuples into a List of tuples called outputTuples
+	 * containing only SUM(integer), SUM(product of integers) In case the Select
+	 * clause consists of only sum() functions that have just constants in it, then
+	 * the data of the tables are not necessary to compute it. Hence an optimisation
+	 * is applied here. It just scans the tables, counts the number of tuples and
+	 * displays it. 2. Clauses containing only SUM() functions 3. Clauses containing
+	 * only GROUP BY clauses 4. Clauses containing both SUM() and GROUP BY clauses
+	 * All the three methods put the final grouped by tuples into a List of tuples
+	 * called outputTuples
 	 */
 	private void groupTheTuples() {
 		Tuple tuple;
@@ -88,23 +97,42 @@ public class SumOperator extends Operator {
 		if (bufferTuples.size() == 0) {
 			return;
 		}
+		Tuple result = new Tuple();
 
-		if (selectClause.toString().toLowerCase().contains("sum") && groupByClause == null) {
-			// This is a case where SUM() function is present but there is no GroupBy clause
-			onlySumClause();
+		if (selectClause.toString().toLowerCase().contains("sum") && checkForTables(selectClause, combinedTableNames)
+				&& groupByClause == null) {
+			int product = 1;
+			for (String table : combinedTableNames) {
+				ScanOperator scan = new ScanOperator(table);
+				int count = 0;
+				while (scan.getNextTuple() != null)
+					count++;
+				product *= count;
+				scan.close();
+			}
+			int tupleValue = 1;
+			for (SelectItem item : selectClause) {
+				tupleValue = evaluateTuple(item);
+				result.add(tupleValue * product);
+			}
+			outputTuples.add(result);
+		} else {
+			if (selectClause.toString().toLowerCase().contains("sum") && groupByClause == null) {
+				// This is a case where SUM() function is present but there is no GroupBy clause
+				onlySumClause();
+			}
+
+			if (!selectClause.toString().toLowerCase().contains("sum") && groupByClause != null) {
+				// This is a case where SUM() function is not at all present by there is GroupBy
+				// clause
+				onlyGroupByClause();
+			}
+
+			if (selectClause.toString().toLowerCase().contains("sum") && groupByClause != null) {
+				// This is the last case where both SUM() and GroupBy are present together
+				sumAndGroupBy();
+			}
 		}
-
-		if (!selectClause.toString().toLowerCase().contains("sum") && groupByClause != null) {
-			// This is a case where SUM() function is not at all present by there is GroupBy
-			// clause
-			onlyGroupByClause();
-		}
-
-		if (selectClause.toString().toLowerCase().contains("sum") && groupByClause != null) {
-			// This is the last case where both SUM() and GroupBy are present together
-			sumAndGroupBy();
-		}
-
 	}
 
 	/*
@@ -382,6 +410,96 @@ public class SumOperator extends Operator {
 			return outputTuples.get(index++);
 		}
 		return null;
+	}
+
+	/*
+	 * Method that adds the names of tables mentioned in the FromItem and Join
+	 * clauses into one single list of Strings
+	 * 
+	 * @param fromItem It is the name of the first table in the input SQL file
+	 * 
+	 * @param joins It consists of a list of tables to be joined to the first table
+	 * 
+	 * @return tables The list of strings containing the names of all the tables
+	 * mentioned in the fromItem and joins
+	 */
+	private static List<String> getTableForSum(FromItem fromItem, List<Join> joins) {
+		List<String> tables = new ArrayList<>();
+		tables.add(fromItem.toString());
+
+		if (!(joins == null)) {
+			for (Join join : joins) {
+				tables.add(join.getRightItem().toString());
+			}
+		}
+		return tables;
+	}
+
+	/*
+	 * Method to check if there is any instance of a table mentioned in the Select
+	 * clause. It is used to filter queries that contain only SUM( integer(s) )
+	 * functions. In case there is a tableName.columnName inside the SUM() function,
+	 * it returns false. Else true.
+	 * 
+	 * @param SELECT It is a list of selectItems is expected to be printed in the
+	 * output file
+	 * 
+	 * @param tableNames It is a list of all the tables present in the input SQL
+	 * file
+	 * 
+	 * @return (boolean) The result after checking if the mentioned tables'
+	 * attributes are present in the select clause or not
+	 */
+	private static boolean checkForTables(List<SelectItem<?>> SELECT, List<String> tableNames) {
+
+		if (tableNames == null) {
+			return false;
+		}
+		for (String table : tableNames) {
+			if (SELECT.toString().toLowerCase().contains(table.toLowerCase())) {
+				return false;
+			}
+		}
+//		if (SELECT.toString().toLowerCase().contains(FROM.toString().toLowerCase()))
+//			return false;
+//		if (!(JOIN == null)) {
+//			for (Join join : JOIN) {
+//				if (SELECT.toString().toLowerCase().contains(join.toString().toLowerCase()))
+//					return false;
+//			}
+//		}
+
+		return true;
+	}
+
+	/*
+	 * Method to take a selectItem and evaluate its answer. If it is a just a number
+	 * inside SUM(), it returns the same. If it more than 1 numbers inside SUM(), it
+	 * performs their product and returns it.
+	 * 
+	 * @param item The SelectItem to be evaluated. Here it is always a SUM()
+	 * function.
+	 * 
+	 * @return answer The result after evaluating the number inside SUM() function
+	 */
+	private int evaluateTuple(SelectItem item) {
+		int answer = 0;
+		Expression exp = ((SelectItem) item).getExpression();
+		Function function = (Function) exp;
+		Expression parameters = function.getParameters();
+		if (!parameters.toString().contains("*")) {
+			// Does not contain * which means its either sum(number)
+			answer = Integer.parseInt(parameters.toString());
+		} else {
+			// In this case we check for either sum(number * number [* number ...])
+			answer = 1;
+			String[] numbers = parameters.toString().split("\\*");
+			for (String individualNums : numbers) {
+				individualNums = individualNums.strip();
+				answer = answer * Integer.parseInt(individualNums);
+			}
+		}
+		return answer;
 	}
 
 	/*

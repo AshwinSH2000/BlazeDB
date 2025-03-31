@@ -66,11 +66,7 @@ public class QueryPlan {
 
 		DatabaseCatalog catalog = DatabaseCatalog.getInstance();
 
-		if (SELECT.toString().toLowerCase().contains("sum") && checkForTables(SELECT, JOIN, FROM) && GROUPBY==null) {
-			List<String> combinedTableNames = getTableForSum(FROM, JOIN);
-			Operator root = new CountRowsOperator(SELECT, combinedTableNames);
-			return root;
-		}
+		List<String> combinedTableNames = getTableForSum(FROM, JOIN);
 
 		if (JOIN == null) {
 
@@ -95,7 +91,7 @@ public class QueryPlan {
 				}
 
 				else { // Handles the case where SUM and/or GROUPBY is present
-					root = new SumOperator(root, GROUPBY, SELECT, attributeHashIndex);
+					root = new SumOperator(root, GROUPBY, SELECT, attributeHashIndex, combinedTableNames);
 					attributeHashIndex = root.getAttributeHashIndex();
 				}
 
@@ -208,7 +204,7 @@ public class QueryPlan {
 					// only
 					attributeHashIndex_lChild = leftChild.getAttributeHashIndex();
 				} else { // Presence of SUM and/or GROUPBY
-					leftChild = new SumOperator(leftChild, GROUPBY, SELECT, attributeHashIndex_lChild);
+					leftChild = new SumOperator(leftChild, GROUPBY, SELECT, attributeHashIndex_lChild, combinedTableNames);
 					// Pulling the new attribute hash index(Schema) containing the projected columns
 					// only
 					attributeHashIndex_lChild = leftChild.getAttributeHashIndex();
@@ -460,35 +456,7 @@ public class QueryPlan {
 		return combinedExpression;
 	}
 
-	/*
-	 * Method to check if there is any instance of a table mentioned in the Select
-	 * clause. It is used to filter queries that contain only SUM( integer(s) )
-	 * functions. In case there is a tableName.columnName inside the SUM() function,
-	 * it returns false. Else true.
-	 * 
-	 * @param SELECT It is a list of selectItems is expected to be printed in the
-	 * output file
-	 * 
-	 * @param JOIN It is a list of all the tables that needs to be joined to the
-	 * table mentioned in the FROM variable
-	 * 
-	 * @param FROM It is the name of the first table in the input SQL file
-	 * 
-	 * @return (boolean) The result after checking if the mentioned tables'
-	 * attributes are present in the select clause or not
-	 */
-	private static boolean checkForTables(List<SelectItem<?>> SELECT, List<Join> JOIN, FromItem FROM) {
-		if (SELECT.toString().toLowerCase().contains(FROM.toString().toLowerCase()))
-			return false;
-		if (!(JOIN == null)) {
-			for (Join join : JOIN) {
-				if (SELECT.toString().toLowerCase().contains(join.toString().toLowerCase()))
-					return false;
-			}
-		}
-
-		return true;
-	}
+	
 
 	/*
 	 * Method that adds the names of tables mentioned in the FromItem and Join

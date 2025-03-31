@@ -5,7 +5,7 @@ Task 1 - Strategy for extracting WHERE clause
 -----------------------------
 I have created two methods to handle this:
 	1. List<Expression> conditionForTable ( List<Expression> listExp , String table)
-	2. List<Expression> conditionForTwoTables (List<Expression> listExp , String tableOne , String tableTwo )
+	2. List<Expression> conditionsForTwoTables (List<Expression> listExp , String tableOne , String tableTwo )
 
 The WHERE conditions from the parsed SQL file will be stored in an Expression variable. 
 I split the WHERE clause (which are joined with AND keyword) by passing it to a splitExpression method and store it in a list.
@@ -42,9 +42,47 @@ This list is then passed as arguments to both the methods mentioned above.
 
  - If the left table is not a result of previous join, then perform a similar computation to check if the passed expression belongs to the passed tables
  - Despite the similar computations, I have split this method into two using 'if-else' because of the way the schema and table names are represented. 
- - For joined tables, the first approach was easier to filter the conditions (visually they slightly differ in the way I access table names and check)
+ - For joined tables, the first approach was easier to filter the conditions (only slight difference in the way I access table names and check)
+ - Similar to the previous case, incase the conditions are reversed, then it is corrected by reorderClause() method. 
+ - After checking each and every WHERE clause, it exits the loop
+ - Lastly returns the list of WHERE clauses that are meant to join these two tables. In case nothing is present, null is returned. 
 
- -  
- 	
 
+  
+Task 2 - Optimisation
+--------------------
+
+I have tried optimising my code using the following methods	
+
+1. Special case of SUM() queries
+   If the queries involving only SUM() with just integer or product of integers and GROUPBY is null, then the actual data does not matter.
+   Hence in SumOperator, I have handled it by having by checking if GROUPBY is null, there are no tableName.colName in SELECT clause. 
+   If all these conditions are satisfied, then I assign a ScanOperator to each table, iterate through the table to findout the number of rows. 
+   Then I multiply these together to get the total number of rows present in the result. 
+   In case there is just one table present, it returns just the number of terms of that table.
+   In case there are series of tables, it returns the number of rows of the cross join. 
+   If the SUM() functions have parameters other than 1, then this i evaluated and then multiplied to the product obtained earlier. 
+   All these are pushed into a tuple and stored as the output tuple. 
+
+   This can greatly reduce the size of intermediate results by not calculating the entire join result (as data is irrelevant here)
+   It just focuses on the size of the table, there by saving space and time. 
+
+2. Combine multiple selections into a single SelectOperator if they reference the same table.
+   I use conditionForTable method to identify all the WHERE clauses applicable for each table and pass it to be evaluated together.
+   By doing so, the SelectOperator need not search for the clauses corresponding to every table it receives. 
+   This reduces the number of operator nodes in the query plan. All the selections are applied to a table in a single go.
+
+2. Combining multiple join conditions into a single joinOperator
+   I use conditionsForTwoTables() method to gather all the join conditions into a single list for the tables being joined. 
+   Since all the conditions are checked simultaneously in join, tuples will be joined only if all the conditions are satisfied. 
+   There is just the final result produced eliminating any intermediate join tables.
+
+4. Applying SelectOperator before each join
+   Before passing tables to join, I apply SelectOperator to each table to reduce the number of tuples. 
+   Doing so reduced the size of tables being joined which leads to faster processing.
+
+5. Applying projection before join
+   For queries that do not involve GROUPBY, I apply projection before joining so that only the necessary tuples are handed over to joinOperator. 
+   This reduces the size of each tuple being checked during join. This leads to smaller intermediate results and faster processing.
+   
 
