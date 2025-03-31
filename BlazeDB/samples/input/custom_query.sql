@@ -1,4 +1,8 @@
-SELECT SUM(1), SUM(10*10) FROM Student2, Course2, Enrolled2, Enrolled;
+SELECT ENROLLED.H, Course.f FROM STUDENT, ENROLLED, COURSE GROUP BY STUDENT.A, ENROLLED.H, COURSE.F order by enrolled.h, course.f;
+
+--SELECT Student.A, Enrolled.H FROM Course, Student, Enrolled;
+--SELECT StudenT.A, EnroLLED.H FROM CouRce, STuDenT, ENROLLed;
+--SELECT SUM(1), SUM(10*10) FROM Student2, Course2, Enrolled2, Enrolled;
 --SELECT SUM(1), SUM(2), SUM(3), SUM(2*2), SUM(2*2*2), SUM(647*473) FROM Enrolled, Course, Course2, Enrolled2, Student;
 --SELECT SUM(1), SUM(2) FROM Enrolled, Course, Course2, Enrolled2, Student, Student2, Teaches, teaches2;
 --select  enrolled.a,enrolled.e from enrolled, enrolled2;

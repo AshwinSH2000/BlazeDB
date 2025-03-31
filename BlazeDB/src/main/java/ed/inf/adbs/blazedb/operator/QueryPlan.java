@@ -122,7 +122,7 @@ public class QueryPlan {
 
 				// This checking is just for the first table.
 				// For all other subsequent tables, it happens inside the following loop.
-				List<Expression> listTableOneClause = conditionForTable(listExp, leftTableName);
+				List<Expression> listTableOneClause = conditionForTable(listExp, leftTableName.toLowerCase());
 				if (!listTableOneClause.isEmpty()) {
 					Expression tableOneClause = combineWithAnd(listTableOneClause);
 					leftChild = new SelectionOperator(leftChild, tableOneClause, attributeHashIndex_lChild);
@@ -165,14 +165,13 @@ public class QueryPlan {
 
 				if (!(WHERE == null)) {
 
-					List<Expression> listTableTwoClause = conditionForTable(listExp, join.toString());
+					List<Expression> listTableTwoClause = conditionForTable(listExp, join.toString().toLowerCase());
 					if (!listTableTwoClause.isEmpty()) {
 						Expression tableTwoClause = combineWithAnd(listTableTwoClause);
 						rightChild = new SelectionOperator(rightChild, tableTwoClause, attributeHashIndex_rChild);
 					}
 
-					List<Expression> listTablesJoinClause = conditionsForTwoTables(listExp, leftTableName,
-							join.toString());
+					List<Expression> listTablesJoinClause = conditionsForTwoTables(listExp, leftTableName.toLowerCase(), join.toString().toLowerCase());
 					if (!listTablesJoinClause.isEmpty()) {
 						// If there is a condition for these two tables, pass it to join operator
 						leftChild = new JoinOperator(leftChild, rightChild, listTablesJoinClause,
@@ -259,19 +258,16 @@ public class QueryPlan {
 				String[] rightTableInJoinClause = e.getRightExpression().toString().toLowerCase().split("\\.");
 
 				// Index 0 will be the name of the table that we wish to check
-				// Checking for commutativity of WHERE clause. Student <op> Course and Course
-				// <op> Student
-				if ((tableOne.toLowerCase().contains(leftTableInJoinClause[0].toLowerCase())
-						&& tableTwo.toLowerCase().contains(rightTableInJoinClause[0].toLowerCase()))
-						|| (tableOne.toLowerCase().contains(rightTableInJoinClause[0].toLowerCase())
-								&& tableTwo.toLowerCase().contains(leftTableInJoinClause[0].toLowerCase()))) {
-					if ((tableOne.toLowerCase().contains(leftTableInJoinClause[0].toLowerCase())
-							&& tableTwo.toLowerCase().contains(rightTableInJoinClause[0].toLowerCase()))) {
-						// The order of WHERE clause is in the order of table specified. Hence add it as
+				// Checking for commutativity of WHERE clause. Student <op> Course and Course <op> Student
+				 
+				if ((tableOne.contains(leftTableInJoinClause[0]) && tableTwo.contains(rightTableInJoinClause[0]) ) ||
+				    (tableOne.contains(rightTableInJoinClause[0]) && tableTwo.contains(leftTableInJoinClause[0]) ) ) 
+				{
+					if ((tableOne.contains(leftTableInJoinClause[0])&& tableTwo.contains(rightTableInJoinClause[0]))) 
+					{	// The order of WHERE clause is in the order of table specified. Hence add it as
 						// it is.
 						returnClause.add(e);
-					} else if ((tableOne.toLowerCase().contains(rightTableInJoinClause[0].toLowerCase())
-							&& tableTwo.toLowerCase().contains(leftTableInJoinClause[0].toLowerCase()))) {
+					} else if ((tableOne.contains(rightTableInJoinClause[0]) && tableTwo.contains(leftTableInJoinClause[0] ) ) ) {
 						// Handling the case where the Tables and Join Conditions are in reverse order
 						// For example: SELECT * FROM Student, Enrolled WHERE Enrolled.A = Student.A;
 						// Hence reverse the WHERE conditions and add it to the list of conditions
@@ -280,30 +276,24 @@ public class QueryPlan {
 				}
 
 			} else {
-				// The left table is not a result of previous join operation
-				if ( // Checking for the join condition commutativity
-				(e.getLeftExpression().toString().toLowerCase().contains(tableOne.toLowerCase())
-						&& e.getRightExpression().toString().toLowerCase().contains(tableTwo.toLowerCase()))
-						|| (e.getLeftExpression().toString().toLowerCase().contains(tableTwo.toLowerCase())
-								&& e.getRightExpression().toString().toLowerCase().contains(tableOne.toLowerCase()))) {
-					if (e.getLeftExpression().toString().toLowerCase().contains(tableOne.toLowerCase())
-							&& e.getRightExpression().toString().toLowerCase().contains(tableTwo.toLowerCase())) { // Order
-																													// of
-																													// join
-																													// attributes
-																													// same
-																													// as
-																													// order
-																													// of
-																													// tables
-						returnClause.add(e);
-					} else if (e.getLeftExpression().toString().toLowerCase().contains(tableTwo.toLowerCase())
-							&& e.getRightExpression().toString().toLowerCase().contains(tableOne.toLowerCase())) {
-						// Split the clause. Reorder it and add it to list
-						returnClause.add(reorderClause(e));
+					// The left table is not a result of previous join operation
+					String leftHalf = e.getLeftExpression().toString().toLowerCase();
+					String rightHalf = e.getRightExpression().toString().toLowerCase();
+					
+					if ((leftHalf.contains(tableOne) && rightHalf.contains(tableTwo)) ||
+						 (leftHalf.contains(tableTwo) && rightHalf.contains(tableOne)) ) 
+					{	// Checking for the join condition commutativity
+						if (leftHalf.contains(tableOne) && rightHalf.contains(tableTwo) ) 
+						{ 
+							returnClause.add(e);
+						} 
+						else if (leftHalf.contains(tableTwo) && rightHalf.contains(tableOne)) 
+						{
+							// Split the clause. Reorder it and add it to list
+							returnClause.add(reorderClause(e));
+						}
 					}
 				}
-			}
 		}
 		return returnClause;
 	}
@@ -372,16 +362,18 @@ public class QueryPlan {
 		for (Expression exp : listExp) {
 
 			ComparisonOperator e = (ComparisonOperator) exp;
-
-			if // This checks if the where clause for the table is a single table where clause
-				// or not
-			((e.getLeftExpression().toString().toLowerCase().contains(table.toLowerCase())
-					&& e.getRightExpression().toString().toLowerCase().contains(table.toLowerCase()))
-					|| (e.getLeftExpression().toString().toLowerCase().contains(table.toLowerCase())
-							&& !(e.getRightExpression() instanceof Column))
-					|| (e.getRightExpression().toString().toLowerCase().contains(table.toLowerCase())
-							&& !(e.getLeftExpression() instanceof Column))
-					|| (isInteger(e.getLeftExpression()) && isInteger(e.getRightExpression()))) {
+			
+			// This checks if the where clause for the table is a single table where clause
+			// or not
+			String leftHalf = e.getLeftExpression().toString().toLowerCase();
+			String rightHalf = e.getRightExpression().toString().toLowerCase();
+			if(
+		    		(leftHalf.contains(table) && rightHalf.contains(table) ) ||
+					(leftHalf.contains(table) && !(e.getRightExpression() instanceof Column)) || 
+					(rightHalf.contains(table) && !(e.getLeftExpression() instanceof Column)) || 
+					(isInteger(e.getLeftExpression()) && isInteger(e.getRightExpression()))
+			) 
+			{
 				returnClause.add(e);
 			}
 		}
