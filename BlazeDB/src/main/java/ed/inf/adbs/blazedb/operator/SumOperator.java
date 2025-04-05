@@ -92,6 +92,7 @@ public class SumOperator extends Operator {
 	 * called outputTuples
 	 */
 	private void groupTheTuples() {
+		
 		Tuple tuple;
 		while ((tuple = root.getNextTuple()) != null) {
 			bufferTuples.add(tuple);

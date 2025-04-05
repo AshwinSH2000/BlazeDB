@@ -1,1 +1,1 @@
-SELECT DISTINCT Student.a, Course.f FROM Student, Enrolled, Course WHERE Student.a = Enrolled.a AND Enrolled.e = Course.e;
+SELECT Student.A, Enrolled.E FROM Student, Enrolled WHERE Student.A = Enrolled.A AND Student.A != 4;

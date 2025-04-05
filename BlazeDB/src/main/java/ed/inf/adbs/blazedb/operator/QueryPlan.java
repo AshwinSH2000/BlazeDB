@@ -65,6 +65,8 @@ public class QueryPlan {
 			ExpressionList GROUPBY, Expression WHERE, List<Join> JOIN, FromItem FROM) {
 
 		DatabaseCatalog catalog = DatabaseCatalog.getInstance();
+		
+		checkForProjection(SELECT, GROUPBY, WHERE, JOIN, FROM);
 
 		List<String> combinedTableNames = getTableForSum(FROM, JOIN);
 
@@ -157,7 +159,8 @@ public class QueryPlan {
 //						attributeHashIndex_rChild = rightChild.getAttributeHashIndex();
 //					}
 //				}
-				//*//		
+				//*//	
+				
 
 				if (!(WHERE == null)) {
 
@@ -479,5 +482,33 @@ public class QueryPlan {
 			}
 		}
 		return tables;
+	}
+	
+	
+	private static void checkForProjection(List<SelectItem<?>> SELECT, ExpressionList GROUPBY, Expression WHERE, List<Join> JOIN, FromItem FROM) {
+		//need to check in SELEXR, GROUPBY, WHERE, JOIN and FROM for all occurences of columns
+		//I dont think you need to send both FROM and JOIN, because you run this check for each of the table. 
+		//Logic
+		//create a selectitem...i thnk you need a list of it. OK
+		//scan through all the parameters, filter out any and all tableName.colName occurrence you fine. 
+		//iterate through each and every passed arg after checking if they are null. If not check its contents. 
+		//also now I feel, you can call this func only once. if will return the selectItem of all attributes present in the query. 
+		//store that in some SelectItem. then in case select does not have *, pass that select thing to projectionOp. 
+		//but do you need to edit something in the ProjectOp function? 
+		//like are you handling that by only having colNames belonging to that table or 
+		//do you have all random col names and then you check if a particular colName belongs to the passed table?
+		System.out.println("I need to announce I am IN HERE!!");
+		if(SELECT instanceof Expression) {
+			System.out.println("True111");
+		}
+		else if(SELECT instanceof FromItem) {
+			System.out.println("True222");
+		}
+		else if(SELECT instanceof Join) {
+			System.out.println("True222");
+		}
+		else if(JOIN instanceof Join) {
+			System.out.println("undu yenchina maraya?!");
+		}
 	}
 }

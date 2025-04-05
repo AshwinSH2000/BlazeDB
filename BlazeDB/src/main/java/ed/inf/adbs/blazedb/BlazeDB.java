@@ -26,6 +26,7 @@ import ed.inf.adbs.blazedb.operator.QueryPlan;
  *
  */
 public class BlazeDB {
+	
 
 	/**
 	 * This is the beginning of the program execution.
@@ -34,7 +35,7 @@ public class BlazeDB {
 	 *             2) input SQL query, 3) name of the output file
 	 */
 	public static void main(String[] args) {
-
+		String s = new String();
 		// This if block checks for the number of arguments passed from command line. It
 		// needs to be 3.
 		if (args.length != 3) {
