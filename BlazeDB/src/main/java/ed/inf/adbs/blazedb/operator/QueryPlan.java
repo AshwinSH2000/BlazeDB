@@ -1,11 +1,16 @@
 package ed.inf.adbs.blazedb.operator;
 
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
+
 import ed.inf.adbs.blazedb.DatabaseCatalog;
 import ed.inf.adbs.blazedb.Tuple;
+import net.sf.jsqlparser.JSQLParserException;
 import net.sf.jsqlparser.expression.Expression;
+import net.sf.jsqlparser.expression.Function;
 import net.sf.jsqlparser.expression.operators.conditional.AndExpression;
 import net.sf.jsqlparser.expression.operators.conditional.OrExpression;
 import net.sf.jsqlparser.expression.operators.relational.ComparisonOperator;
@@ -16,11 +21,13 @@ import net.sf.jsqlparser.expression.operators.relational.GreaterThanEquals;
 import net.sf.jsqlparser.expression.operators.relational.MinorThan;
 import net.sf.jsqlparser.expression.operators.relational.MinorThanEquals;
 import net.sf.jsqlparser.expression.operators.relational.NotEqualsTo;
+import net.sf.jsqlparser.parser.CCJSqlParserUtil;
 import net.sf.jsqlparser.schema.Column;
 import net.sf.jsqlparser.statement.select.Distinct;
 import net.sf.jsqlparser.statement.select.FromItem;
 import net.sf.jsqlparser.statement.select.Join;
 import net.sf.jsqlparser.statement.select.OrderByElement;
+import net.sf.jsqlparser.statement.select.Select;
 import net.sf.jsqlparser.statement.select.SelectItem;
 
 /*
@@ -66,7 +73,7 @@ public class QueryPlan {
 
 		DatabaseCatalog catalog = DatabaseCatalog.getInstance();
 		
-		checkForProjection(SELECT, GROUPBY, WHERE, JOIN, FROM);
+		List<SelectItem<?>> NEW_SELECT = checkForProjection(SELECT, GROUPBY, WHERE, JOIN, FROM);
 
 		List<String> combinedTableNames = getTableForSum(FROM, JOIN);
 
@@ -127,39 +134,39 @@ public class QueryPlan {
 				}
 			}
 
-			//*//
-			// This cannot be applied to GROUPBY because there may be some attributes that
-			// are necessary for grouping but not present in select.
+//			//*//
+//			// This cannot be applied to GROUPBY because there may be some attributes that
+//			// are necessary for grouping but not present in select.
 //			if (!SELECT.toString().contains("[*]")) {
-//				if (!SELECT.toString().toLowerCase().contains("sum") && GROUPBY == null) {
+//				//if (!SELECT.toString().toLowerCase().contains("sum") && GROUPBY == null) {
 //					// Handling projection of column attributes only.
-//					leftChild = new ProjectionOperator(leftChild, SELECT, attributeHashIndex_lChild);
+//					leftChild = new ProjectionOperator(leftChild, NEW_SELECT, attributeHashIndex_lChild);
 //					// Pulling the new attribute hash index(schema) containing the projected columns
 //					// only
 //
 //					attributeHashIndex_lChild = leftChild.getAttributeHashIndex();
-//				}
+//				//}
 //			}
+//			//*//
 			
-			//*//
 			for (Join join : JOIN) {
 				// this loop is to iteratively handle all the tables in JOIN
 				Operator rightChild = new ScanOperator(join.getRightItem().toString());
 				Map<String, Integer> attributeHashIndex_rChild = rightChild.getAttributeHashIndex();
 
-			//*//
-				// This cannot be applied to GROUPBY because there may be some attributes that
-				// are necessary for grouping but not present in select.
+//			//*//
+//				// This cannot be applied to GROUPBY because there may be some attributes that
+//				// are necessary for grouping but not present in select.
 //				if (!SELECT.toString().contains("[*]")) {
-//					if (!SELECT.toString().toLowerCase().contains("sum") && GROUPBY == null) {
+//					//if (!SELECT.toString().toLowerCase().contains("sum") && GROUPBY == null) {
 //						// Handling projection of column attributes only.
-//						rightChild = new ProjectionOperator(rightChild, SELECT, attributeHashIndex_rChild);
+//						rightChild = new ProjectionOperator(rightChild, NEW_SELECT, attributeHashIndex_rChild);
 //						// Pulling the new attribute hash index(schema) containing the projected columns
 //						// only
 //						attributeHashIndex_rChild = rightChild.getAttributeHashIndex();
-//					}
+//					//}
 //				}
-				//*//	
+//				//*//	
 				
 
 				if (!(WHERE == null)) {
@@ -483,9 +490,72 @@ public class QueryPlan {
 		}
 		return tables;
 	}
+
+	/*
+	 * This is to further split the expressions. it will split the where clause without leaving the comparison operator in between
+	 */
+	private static List<Expression> splitExpressionFurther(Expression expression) {
+		List<Expression> expressionList = new ArrayList<>();
+
+		// if the expression is a logical conjunction and/or then split it recursively
+		if (expression instanceof AndExpression) {
+			
+			AndExpression andExpression = (AndExpression) expression;
+			expressionList.addAll(splitExpression(andExpression.getLeftExpression()));
+			expressionList.addAll(splitExpression(andExpression.getRightExpression()));
+			
+		}
+		// The below wont be of much use to this program but added anyway to test custom
+		// queries.
+		else if (expression instanceof OrExpression) {
+			
+			OrExpression orExpression = (OrExpression) expression;
+			expressionList.addAll(splitExpression(orExpression.getLeftExpression()));
+			expressionList.addAll(splitExpression(orExpression.getRightExpression()));
+			
+		} else if (expression instanceof EqualsTo){
+			
+			EqualsTo EqualsToExpr = (EqualsTo) expression;
+			expressionList.addAll(splitExpression(EqualsToExpr.getLeftExpression()));
+			expressionList.addAll(splitExpression(EqualsToExpr.getRightExpression()));
+			
+		} else if (expression instanceof NotEqualsTo){
+			
+			NotEqualsTo EqualsToExpr = (NotEqualsTo) expression;
+			expressionList.addAll(splitExpression(EqualsToExpr.getLeftExpression()));
+			expressionList.addAll(splitExpression(EqualsToExpr.getRightExpression()));
+			
+		} else if (expression instanceof GreaterThan){
+				
+			 GreaterThan EqualsToExpr = (GreaterThan) expression;
+			expressionList.addAll(splitExpression(EqualsToExpr.getLeftExpression()));
+			expressionList.addAll(splitExpression(EqualsToExpr.getRightExpression()));
+				
+		} else if (expression instanceof GreaterThanEquals){
+				
+			GreaterThanEquals EqualsToExpr = (GreaterThanEquals) expression;
+			expressionList.addAll(splitExpression(EqualsToExpr.getLeftExpression()));
+			expressionList.addAll(splitExpression(EqualsToExpr.getRightExpression()));
+				
+		} else if (expression instanceof MinorThan){
+				
+			MinorThan EqualsToExpr = (MinorThan) expression;
+			expressionList.addAll(splitExpression(EqualsToExpr.getLeftExpression()));
+			expressionList.addAll(splitExpression(EqualsToExpr.getRightExpression()));
+				
+		} else if (expression instanceof MinorThanEquals){
+				
+			 MinorThanEquals EqualsToExpr = (MinorThanEquals) expression;
+			expressionList.addAll(splitExpression(EqualsToExpr.getLeftExpression()));
+			expressionList.addAll(splitExpression(EqualsToExpr.getRightExpression()));
+				
+		} else {
+			expressionList.add(expression);
+		}
+		return expressionList;
+	}
 	
-	
-	private static void checkForProjection(List<SelectItem<?>> SELECT, ExpressionList GROUPBY, Expression WHERE, List<Join> JOIN, FromItem FROM) {
+	private static List<SelectItem<?>> checkForProjection(List<SelectItem<?>> SELECT, ExpressionList GROUPBY, Expression WHERE, List<Join> JOIN, FromItem FROM) {
 		//need to check in SELEXR, GROUPBY, WHERE, JOIN and FROM for all occurences of columns
 		//I dont think you need to send both FROM and JOIN, because you run this check for each of the table. 
 		//Logic
@@ -497,18 +567,66 @@ public class QueryPlan {
 		//but do you need to edit something in the ProjectOp function? 
 		//like are you handling that by only having colNames belonging to that table or 
 		//do you have all random col names and then you check if a particular colName belongs to the passed table?
-		System.out.println("I need to announce I am IN HERE!!");
-		if(SELECT instanceof Expression) {
-			System.out.println("True111");
+		//Update: written something but I feel this is dirty code. Temporary fix using a string but need to clean it up later. 
+		
+		List<SelectItem<?>> returnSelect = new ArrayList<SelectItem<?>>();
+		
+		if(SELECT!=null) {
+			System.out.println("select is not null");
+			for (SelectItem item : SELECT) {
+				
+				Expression exp = ((SelectItem) item).getExpression();
+				
+				if(exp instanceof Column) {
+					returnSelect.add(item);
+				}
+				else if(exp instanceof Function) {
+					Function tempFunc = (Function) exp;
+					ExpressionList splitExp = tempFunc.getParameters();
+					
+					
+					String[] strSplitExp = splitExp.toString().split("\\*");
+					
+					//now split the things in e1
+					for (int i=0 ; i< strSplitExp.length; i++) {
+						try {
+							//if this works then it is not a column reference
+							Integer.parseInt(strSplitExp[i].strip());
+						} catch (Exception e) {
+							//Here, it is a column reference inside the sum function
+							
+							Expression tempExpr;
+							try {
+								tempExpr = CCJSqlParserUtil.parseExpression(strSplitExp[i]);
+								SelectItem tempSelectItem = new SelectItem(tempExpr);
+								returnSelect.add(tempSelectItem);
+								
+							} catch (JSQLParserException e1) {
+								// TODO Auto-generated catch block
+								e1.printStackTrace();
+							}
+						}
+					}
+				}
+			}
 		}
-		else if(SELECT instanceof FromItem) {
-			System.out.println("True222");
+
+		if(GROUPBY!=null) {
+			for(Object grpbyobj: GROUPBY) {
+				if(!returnSelect.toString().contains(grpbyobj.toString()))
+					returnSelect.add(new SelectItem((Expression) grpbyobj));
+			}
 		}
-		else if(SELECT instanceof Join) {
-			System.out.println("True222");
+
+		if(WHERE!=null) {
+			List<Expression> splitWhere = splitExpressionFurther(WHERE);
+			//iterate over this returned expression
+			for (Expression exp : splitWhere) {
+				if(!returnSelect.toString().contains(exp.toString()))
+					returnSelect.add(new SelectItem(exp));
+			}
 		}
-		else if(JOIN instanceof Join) {
-			System.out.println("undu yenchina maraya?!");
-		}
+		System.out.println("At the end of WHERE returning the list as: "+returnSelect.toString());
+		return returnSelect;
 	}
 }

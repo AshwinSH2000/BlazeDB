@@ -303,8 +303,7 @@ public class SumOperator extends Operator {
 								colValue = scannedTuple.get(attributeHashIndex.get(stringParameters[0].toLowerCase()));
 							}
 
-							presentValue = presentTuple
-									.get(projectedAttributeHashIndex.get(exp.toString().toLowerCase()));
+							presentValue = presentTuple.get(projectedAttributeHashIndex.get(exp.toString().toLowerCase()));
 							tupleHashValue.add(presentValue + colValue);
 						} else {
 							// It means parameters are more than 1
