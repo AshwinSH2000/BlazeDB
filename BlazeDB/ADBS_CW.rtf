@@ -1,0 +1,59 @@
+7/3/25
+Yesterday, I had committed a code that I believed to be working fine for all the first 4 queries. But today when I was testing, i found out that SELECT.contains("*") was executing false always. 
+I realised the error was SELECT.contains() method was expecting an object but I was specifying a string instead. Thats hwy it was always false. 
+After debugging a lot, i found out that i had to include .toString() in between SELECT and .contains(). 
+Thats it, it solved the problem but took a lot of my time. 
+Hope I remember this, inc ase I experience something like this again. 
+
+14/2/25
+- When I ran maven compile code given in the instructions, it said mvn: command not found. 
+- So that means I had to install maven. Again took help from programmingknowledge yt channel. 
+- Went to apache site and downloaded the latest maven version in tar.gz. Extracted it in the downloads folder.
+- Moved this extracted folder into the applications folder.
+- added the following lines in .zshrc file
+	export M2_HOME=/Applications/apache-maven-<my version without angle brackets>
+	export PATH=$PATH:$M2_HOME/bin
+- type source .zshrc to load all the changes or close and open terminal
+- when yoyou type mvn -version in terminal , it should list out the correct version of maven installed
+- also when you types the above command, it should also point towards the correct version of jdk under Java Version : ...  just be sure to check that. 
+- back in eclipse, I did right click on project -> maven build... there in JREs, I selected the 21.0.1 sth sth..basically my installed version of JDK. 
+- It was earlier pointing to the JRE. 1.8 ..sth sth
+- Then I did right click on project -> run as -> maven clean -> it said successful build
+- Then i did right click on project -> run as -> maven install -> again said successful build
+- Then I used the code given in the instructions doc to build the code. successful touhchwood!
+- Ran a sample query and got an output. 
+
+MAIN ISSUE I FACED WHILE DOING MAVEN INSTALL 
+- It said build failed. it seems like you are trying to build/run on a JRE ratehr than a JDK. 
+- When i googled, I found out that eclipse is pointint towards jre rather that jdk. 
+- So when I did maven build... I selected the jdk version correctly( it was greyed out before. So I thought i am not allowed to click it. But it was clickable. 
+- After changing the jre to jdk, I clicked apply. Typed a goal as it was necessary and clicked apply and save or something. 
+- Ran maven install again and this time it worked fine.  
+
+7/2/25
+- Installed java from oracle site. also set the java_home path for it. 
+- Then for a week i didnt do anything. 
+
+In detail explanation
+- Downloaded the file form oracle.  
+- Ran the dmg and it installed correctly. 
+- Now needed to set the home path. so what to do?
+  - opened terminal and types /usr/libexec/java_home -V
+  - it displayed the version number and the location where java is installed
+  - (displays sth like 21.0.... /path/path etc etc
+  - to set path you can use either bash_rc or zshrc file
+  - zshrc is in the home folder
+  - use sudo vim .zshrc to enter it because otherwise it will give a problem while saving it
+  - add the lines into the file
+ 	export JAVA_HOME=$(/usr/libexec/java_home -v <myversion..without this angle brackets>
+	export PATH=$JAVA_HOME/bin:$PATH
+  - save it and close the file
+  - now to bring the changes into effect, either restart the terminal or type "source .zshrc" (without the double quotes)
+
+  - to verify if the home is set properly, type echo $JAVA_HOME
+  - this should display the exact folder where your jdk is present
+  - java -version will dsoplay the version if successfully installed
+  - thats it... then he opened any ide and ran a simple java program
+  
+
+  - I also loaded the given code into it by selecting pom.xml file .. ashte maadiddu eegada tanaka
